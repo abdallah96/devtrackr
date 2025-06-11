@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import './TaskTracker.css';
-// Simple icons as SVG for edit and delete
-const EditIcon = () => (
-  <svg width="18" height="18" fill="none" stroke="#64748b" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 13l6.071-6.071a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6v-3.586a1 1 0 01.293-.707l9-9a1 1 0 011.414 0l3.586 3.586a1 1 0 010 1.414l-9 9A1 1 0 013.586 19H3z"/></svg>
-);
-const DeleteIcon = () => (
-  <svg width="18" height="18" fill="none" stroke="#64748b" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 19a2 2 0 002 2h8a2 2 0 002-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-);
+import { EditIcon } from '../Icons/EditIcon';
+import { DeleteIcon } from '../Icons/DeleteIcon';
 
 function TaskTracker() {
   // Local state for tasks
