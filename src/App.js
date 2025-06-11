@@ -1,23 +1,23 @@
-import logo from './logo.svg';
 import './App.css';
+import JournalTracker from './components/JournalTracker';
+import Stats from './components/Stats';
+import TaskTracker from './components/TaskTracker';
+import { useState } from 'react';
 
 function App() {
+  const [activeTab, setActiveTab] = useState('journal');
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <nav className="App-nav">
+        <button onClick={() => setActiveTab('journal')}>Journal</button>
+        <button onClick={() => setActiveTab('stats')}>Stats</button>
+        <button onClick={() => setActiveTab('task')}>Task</button>
+        </nav>
       </header>
+      {activeTab === 'journal' && <JournalTracker />}
+      {activeTab === 'stats' && <Stats />}
+      {activeTab === 'task' && <TaskTracker />}
     </div>
   );
 }
