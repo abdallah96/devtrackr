@@ -1,0 +1,49 @@
+.journal-preview {
+  background: none;
+  border-radius: 12px;
+  padding: 0;
+  margin: 0;
+}
+
+.journal-preview__title {
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.journal-preview__content {
+  background: #1e242c;
+  border-radius: 10px;
+  padding: 1.2rem 1.5rem;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.journal-preview__entry-text {
+  color: #cfd8dc;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.journal-preview__placeholder {
+  color: #90caf9;
+  font-size: 1.05rem;
+  font-style: italic;
+}
+
+.journal-preview__image-container {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.journal-preview__image {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+  object-fit: cover;
+  max-height: 220px;
+} 

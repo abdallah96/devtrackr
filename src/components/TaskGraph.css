@@ -1,0 +1,75 @@
+.task-graph {
+  margin: 2rem 0;
+  max-width: 600px;
+}
+
+.task-graph__title {
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.task-graph__card {
+  background: #1e242c;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+}
+
+.task-graph__header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.task-graph__subtitle {
+  color: #cfd8dc;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.task-graph__percent {
+  color: #4caf50;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0.2rem 0;
+}
+
+.task-graph__comparison {
+  color: #90caf9;
+  font-size: 0.95rem;
+}
+.task-graph__comparison span {
+  color: #4caf50;
+  font-weight: 600;
+  margin-left: 0.3rem;
+}
+
+.task-graph__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.2rem;
+  height: 120px;
+  margin-top: 1rem;
+}
+
+.task-graph__bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.task-graph__bar {
+  width: 18px;
+  background: #2196f3;
+  border-radius: 6px 6px 0 0;
+  transition: height 0.3s;
+}
+
+.task-graph__day {
+  color: #cfd8dc;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+} 
