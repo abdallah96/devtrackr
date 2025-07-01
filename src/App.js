@@ -9,6 +9,7 @@ import TaskGraph from './components/TaskGraph';
 import { useState, useEffect } from 'react';
 
 const getToday = () => new Date().toISOString().slice(0, 10);
+
 const getThisWeek = () => {
   const today = new Date();
   const week = [];
@@ -54,7 +55,15 @@ function App() {
     const saved = localStorage.getItem('devtrackr_journal');
     return saved ? JSON.parse(saved) : defaultJournal;
   });
-
+  useEffect(() => {
+    // Force clear localStorage
+    localStorage.clear();
+    
+    const loadData = async () => {
+      // ... rest of your code
+    };
+    loadData();
+  }, []);
   useEffect(() => {
     localStorage.setItem('devtrackr_tasks', JSON.stringify(tasks));
   }, [tasks]);
