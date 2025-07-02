@@ -5,7 +5,8 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build"
+        "distDir": "build",
+        "buildCommand": "npm run vercel-build"
       }
     },
     {
@@ -23,7 +24,9 @@
       "dest": "/index.html"
     }
   ],
-  "env": {
-    "DATABASE_URL": "@database_url"
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 30
+    }
   }
 } 

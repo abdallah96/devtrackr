@@ -1,26 +1,28 @@
 #!/bin/bash
 
-echo "🚀 G-Tracker Deployment Script"
-echo "=============================="
+echo "🚀 Deploying G-Tracker to Vercel..."
 
-# Check if Vercel CLI is installed
+# Check if vercel CLI is installed
 if ! command -v vercel &> /dev/null; then
     echo "❌ Vercel CLI not found. Installing..."
     npm install -g vercel
 fi
 
-# Check if user is logged in
-if ! vercel whoami &> /dev/null; then
-    echo "❌ Not logged in to Vercel. Please login:"
-    vercel login
+# Check if .env file exists
+if [ ! -f .env ]; then
+    echo "⚠️  No .env file found. Please create one with your DATABASE_URL"
+    echo "Example:"
+    echo "DATABASE_URL=\"postgresql://user:password@host:port/database\""
+    echo "NODE_ENV=production"
+    exit 1
 fi
 
 # Build the project
 echo "📦 Building project..."
-npm run build
+npm run vercel-build
 
 if [ $? -ne 0 ]; then
-    echo "❌ Build failed. Please fix the errors and try again."
+    echo "❌ Build failed!"
     exit 1
 fi
 
@@ -30,11 +32,8 @@ echo "✅ Build successful!"
 echo "🚀 Deploying to Vercel..."
 vercel --prod
 
-echo "✅ Deployment complete!"
-echo ""
-echo "📋 Next steps:"
-echo "1. Set DATABASE_URL environment variable in Vercel dashboard"
-echo "2. Run database migrations: vercel env pull .env && npx prisma migrate deploy"
-echo "3. Test your deployed app"
-echo ""
-echo "🌐 Your app should be live at the URL provided above" 
+echo "🎉 Deployment complete!"
+echo "📝 Don't forget to:"
+echo "   1. Set DATABASE_URL in Vercel dashboard"
+echo "   2. Run database migrations: npx prisma db push"
+echo "   3. Test your API endpoints" 

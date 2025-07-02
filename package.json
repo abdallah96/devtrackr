@@ -22,7 +22,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "nodemon server.js",
-    "dev": "concurrently \"npm run server\" \"npm start\""
+    "dev": "concurrently \"npm run server\" \"npm start\"",
+    "vercel-build": "prisma generate && react-scripts build"
   },
   "eslintConfig": {
     "extends": [
@@ -45,5 +46,8 @@
   "devDependencies": {
     "concurrently": "^9.2.0",
     "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

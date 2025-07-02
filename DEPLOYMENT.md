@@ -1,100 +1,151 @@
-# G-Tracker Deployment Guide
+# 🚀 Vercel Deployment Guide
 
-## Overview
-This app is configured to deploy on Vercel using serverless functions for the API and static hosting for the React frontend.
+This guide will help you deploy G-Tracker to Vercel successfully.
 
-## Pre-deployment Setup
+## Prerequisites
 
-### 1. Database Setup
-- Ensure your Postgres database is accessible from Vercel (Vercel Postgres or external provider)
-- Your database should already be set up with the Prisma schema
+1. **Vercel Account**: Sign up at [vercel.com](https://vercel.com)
+2. **PostgreSQL Database**: Use [Neon](https://neon.tech) (free) or [Supabase](https://supabase.com)
+3. **GitHub Repository**: Your code should be pushed to GitHub
 
-### 2. Environment Variables
-You'll need to set these in Vercel:
-- `DATABASE_URL`: Your Postgres connection string
+## Step 1: Database Setup
 
-## Deployment Steps
+### Option A: Neon (Recommended - Free)
+1. Go to [neon.tech](https://neon.tech)
+2. Create a free account
+3. Create a new project
+4. Copy the connection string
 
-### 1. Install Vercel CLI
+### Option B: Supabase (Free Tier)
+1. Go to [supabase.com](https://supabase.com)
+2. Create a free account
+3. Create a new project
+4. Go to Settings > Database
+5. Copy the connection string
+
+## Step 2: Deploy to Vercel
+
+### Method 1: Vercel CLI (Recommended)
 ```bash
+# Install Vercel CLI
 npm i -g vercel
-```
 
-### 2. Login to Vercel
-```bash
+# Login to Vercel
 vercel login
-```
 
-### 3. Deploy
-```bash
+# Deploy
 vercel
+
+# Follow the prompts:
+# - Link to existing project? No
+# - Project name: g-tracker
+# - Directory: ./devtrackr
+# - Override settings? No
 ```
 
-### 4. Set Environment Variables
-In the Vercel dashboard:
-1. Go to your project settings
-2. Navigate to "Environment Variables"
-3. Add `DATABASE_URL` with your Postgres connection string
+### Method 2: GitHub Integration
+1. Go to [vercel.com](https://vercel.com)
+2. Click "New Project"
+3. Import your GitHub repository
+4. Configure settings:
+   - **Framework Preset**: Other
+   - **Root Directory**: devtrackr
+   - **Build Command**: `npm run vercel-build`
+   - **Output Directory**: build
 
-### 5. Run Database Migrations
-After deployment, run Prisma migrations:
+## Step 3: Environment Variables
+
+In your Vercel project dashboard:
+
+1. Go to **Settings** > **Environment Variables**
+2. Add these variables:
+
+```
+DATABASE_URL=your_postgres_connection_string
+NODE_ENV=production
+```
+
+3. Click **Save**
+
+## Step 4: Database Migration
+
+After deployment, run database migrations:
+
 ```bash
+# Install Vercel CLI if not already installed
+npm i -g vercel
+
+# Run migrations
 vercel env pull .env
-npx prisma migrate deploy
+npx prisma db push
 ```
 
-## File Structure for Vercel
+## Step 5: Update Frontend API URL
 
+Update your frontend to use the production API:
+
+1. In Vercel dashboard, copy your deployment URL
+2. Update `src/api.js` to use the production URL:
+
+```javascript
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://your-vercel-domain.vercel.app/api' 
+  : 'http://localhost:5001/api';
 ```
-devtrackr/
-├── api/                    # Serverless functions
-│   ├── tasks.js           # GET/POST /api/tasks
-│   ├── tasks/[id].js      # PUT /api/tasks/[id]
-│   └── journal.js         # GET/POST /api/journal
-├── src/                   # React frontend
-├── prisma/               # Database schema
-├── vercel.json           # Vercel configuration
-└── package.json
-```
-
-## How It Works
-
-### Development vs Production
-- **Development**: Uses Express server on localhost:5001
-- **Production**: Uses Vercel serverless functions at `/api/*`
-
-### API Endpoints
-- `GET /api/tasks` - Get all tasks
-- `POST /api/tasks` - Create new task
-- `PUT /api/tasks/[id]` - Update task completion
-- `GET /api/journal` - Get all journal entries
-- `POST /api/journal` - Create new journal entry
 
 ## Troubleshooting
 
-### Common Issues
-1. **Database Connection**: Ensure DATABASE_URL is set correctly
-2. **CORS Errors**: CORS is handled by serverless functions
-3. **Build Errors**: Check that all dependencies are in package.json
+### Common Issues:
 
-### Local Testing
-To test the production build locally:
+1. **Build Fails**
+   - Check that `vercel-build` script exists in package.json
+   - Ensure all dependencies are in `dependencies` (not `devDependencies`)
+
+2. **Database Connection Fails**
+   - Verify DATABASE_URL is set correctly
+   - Check if database allows external connections
+   - Ensure database is running
+
+3. **API Routes Not Working**
+   - Check that API files are in `/api` directory
+   - Verify CORS headers are set correctly
+   - Check Vercel function logs
+
+4. **Prisma Client Issues**
+   - Run `npx prisma generate` locally
+   - Ensure `@prisma/client` is in dependencies
+   - Check that schema.prisma is correct
+
+### Debug Commands:
+
 ```bash
-npm run build
-vercel dev
+# Check build logs
+vercel logs
+
+# Check function logs
+vercel logs --function api/tasks
+
+# Redeploy with debug info
+vercel --debug
 ```
 
-## Migration from Express Server
+## Production Checklist
 
-The original `server.js` is kept for local development. For production:
-- API routes moved to `/api/*.js` files
-- CORS handled by serverless functions
-- Database connections managed per request
+- [ ] Database is set up and accessible
+- [ ] Environment variables are configured
+- [ ] Database migrations are run
+- [ ] API routes are working
+- [ ] Frontend is connecting to production API
+- [ ] CORS is configured correctly
+- [ ] Build is successful
+- [ ] Domain is configured (optional)
 
-## Next Steps
+## Support
 
-After deployment:
-1. Test all functionality
-2. Set up custom domain (optional)
-3. Configure analytics (optional)
-4. Set up monitoring (optional) 
+If you encounter issues:
+1. Check Vercel deployment logs
+2. Verify environment variables
+3. Test API endpoints manually
+4. Check database connectivity
+
+Your app should now be live at `https://your-project.vercel.app`! 🎉 

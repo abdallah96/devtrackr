@@ -1,83 +1,232 @@
-# 🧩 DevTrackr — Productivity App for Developers
+# 🚀 G-Tracker — Modern Productivity & Journal App
 
-DevTrackr is a simple productivity app designed for developers to:
-- ✅ Track daily tasks
-- 🗒️ Write journal entries
-- 📊 Visualize productivity stats
+A beautiful, full-stack productivity application for tracking tasks, journal entries, and visualizing your productivity journey. Built with a modern tech stack and designed for both web and desktop use.
 
-Built using **React** as part of my journey from junior to senior developer (2025).
-
----
-
-## 🚀 Features
-
-- ✅ Task manager (add, delete, mark complete)
-- 🗓️ Journal component (coming soon)
-- 📈 Productivity stats with charts (planned)
-- 🌙 Dark mode UI
-- 💾 Local storage (MVP), moving to cloud soon
+![G-Tracker Dashboard](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![React](https://img.shields.io/badge/React-19.1.0-blue)
+![Node.js](https://img.shields.io/badge/Node.js-Express-brightgreen)
+![Database](https://img.shields.io/badge/Database-PostgreSQL-blue)
 
 ---
 
-## 📸 Screenshots
+## ✨ Features
+
+### 🎯 Core Functionality
+- **📝 Task Management**: Add, edit, delete, and mark tasks as complete
+- **📖 Journal Entries**: Write, edit, and search through journal entries
+- **📊 Productivity Dashboard**: Visual progress tracking and weekly insights
+- **🔍 Search & Filter**: Find specific tasks and journal entries quickly
+
+### 🎨 User Experience
+- **🌙 Dark Theme**: Beautiful, modern dark interface
+- **📱 Responsive Design**: Works perfectly on desktop, tablet, and mobile
+- **⚡ Real-time Updates**: Instant UI updates with optimistic rendering
+- **🎯 Inline Actions**: Edit and delete with smooth inline confirmations
+
+### 🏗️ Technical Features
+- **💾 Persistent Storage**: PostgreSQL database with Prisma ORM
+- **🔄 Real-time Sync**: Frontend-backend communication via REST API
+- **🖥️ Desktop App**: Install as PWA or build with Electron
+- **🚀 Production Ready**: Deploy to Vercel with serverless functions
 
 ---
 
 ## 🛠️ Tech Stack
 
-- [React](https://reactjs.org/)
-- CSS Modules or Tailwind *(if added)*
-- Future: Node.js backend or Supabase
+### Frontend
+- **React 19** - Modern UI framework
+- **CSS3** - Custom styling with dark theme
+- **PWA** - Progressive Web App capabilities
+
+### Backend
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **Prisma** - Database ORM
+- **PostgreSQL** - Production database
+
+### Development & Deployment
+- **Vercel** - Serverless deployment
+- **Electron** - Desktop app packaging
+- **GitHub** - Version control
 
 ---
 
-## 🧪 Getting Started
+## 🚀 Quick Start
 
-To run locally:
+### Prerequisites
+- Node.js 18+ 
+- PostgreSQL database
+- npm or yarn
+
+### Installation
 
 ```bash
-git clone https://github.com/your-username/devtrackr.git
-cd devtrackr
-npm install
-npm start
+# Clone the repository
+git clone https://github.com/your-username/gtracker.git
+cd gtracker/devtrackr
 
-# Getting Started with Create React App
+# Install dependencies
+yarn install
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your database URL
 
-## Available Scripts
+# Run database migrations
+npx prisma migrate dev
 
-In the project directory, you can run:
+# Start development server
+yarn dev
+```
 
-### `npm start`
+### Available Scripts
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```bash
+# Development
+yarn dev          # Start React app + Express server
+yarn start        # Start React app only
+yarn server       # Start Express server only
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+# Production
+yarn build        # Build for production
+yarn dist         # Build desktop app with Electron
 
-### `npm test`
+# Database
+npx prisma studio # Open database GUI
+npx prisma migrate # Run database migrations
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## 📱 Usage
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Dashboard
+- **Today's Progress**: View completed vs total tasks
+- **Journal Preview**: See your latest journal entry
+- **Weekly Productivity**: Track completion trends
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Tasks
+- **Add Tasks**: Type and press Enter or click Add
+- **Edit Tasks**: Click the pencil icon to edit inline
+- **Delete Tasks**: Click trash icon, then confirm
+- **Mark Complete**: Check the checkbox to toggle status
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Journal
+- **Write Entries**: Use the large text area
+- **Edit Entries**: Click pencil icon to modify
+- **Delete Entries**: Click trash icon with confirmation
+- **Search**: Filter entries by typing in search box
 
-### `npm run eject`
+### Insights
+- **Last Week's Progress**: Compare with current week
+- **Journal History**: Review past entries
+- **Productivity Trends**: Visual data analysis
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+---
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 🖥️ Desktop App
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### PWA Installation (Instant)
+1. Open the app in Chrome/Safari
+2. Click the "Install" button in the address bar
+3. Your app is now a desktop application!
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Electron Build (Advanced)
+```bash
+# Build desktop installer
+yarn dist
+
+# Available for:
+# - macOS (.dmg)
+# - Windows (.exe) 
+# - Linux (.AppImage)
+```
+
+---
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+```bash
+# Deploy to Vercel
+vercel
+
+# Set environment variables in Vercel dashboard:
+# DATABASE_URL=your_postgres_connection_string
+```
+
+### Manual Deployment
+```bash
+# Build the app
+yarn build
+
+# Deploy build folder to your hosting service
+```
+
+---
+
+## 🗄️ Database Schema
+
+### Tasks
+```sql
+- id: Int (Primary Key)
+- text: String
+- completed: Boolean
+- date: DateTime
+- createdAt: DateTime
+```
+
+### Journal Entries
+```sql
+- id: Int (Primary Key)
+- text: String
+- date: DateTime
+- createdAt: DateTime
+```
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+```env
+DATABASE_URL="postgresql://user:password@host:port/database"
+PORT=5001
+NODE_ENV=production
+REACT_APP_API_PORT=5001
+```
+
+### Customization
+- **App Icon**: Replace `public/logo192.png`
+- **Theme Colors**: Edit CSS variables in `src/index.css`
+- **Window Size**: Modify `public/electron.js` for desktop app
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- Built as part of the journey from junior to senior developer
+- Inspired by modern productivity tools
+- Thanks to the React and Node.js communities
+
+---
+
+**Made with ❤️ by [Your Name]**
+
+*Transform your productivity journey with G-Tracker!*
