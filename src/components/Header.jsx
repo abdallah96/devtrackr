@@ -33,7 +33,9 @@ const Header = ({ activeTab, onNav }) => {
         {navLinks.map(link => (
           <a
             key={link.key}
-            href="#"
+            href="/"
+            role="button"
+            tabIndex={0}
             className={`header__link${activeTab === link.key ? ' header__link--active' : ''}`}
             onClick={e => { e.preventDefault(); onNav && onNav(link.key); }}
           >
