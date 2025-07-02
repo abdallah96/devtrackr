@@ -15,8 +15,8 @@ const allowedOrigins = [
   'http://localhost:3002',
   'http://localhost:3003',
   // Production origins (add your domain here)
-  'https://g-tracker-three.vercel.app/',
-  'https://g-tracker-three.vercel.app/',
+  'https://devtrackr-one.vercel.app/',
+  'https://devtrackr-one.vercel.app/',
   // Electron app origins
   'file://',
   'app://',
