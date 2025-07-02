@@ -1,6 +1,17 @@
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api' 
-  : 'http://localhost:5001/api';
+// Dynamic API base URL for development and production
+const getApiBaseUrl = () => {
+  if (process.env.NODE_ENV === 'production') {
+    // In production, use relative URL (same domain)
+    return '/api';
+  }
+  
+  // In development, try to detect the backend port
+  // You can also set this via environment variable
+  const backendPort = process.env.REACT_APP_API_PORT || '5001';
+  return `http://localhost:${backendPort}/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Task API functions
 export const taskAPI = {

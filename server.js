@@ -4,9 +4,50 @@ const { PrismaClient } = require('@prisma/client');
 
 const app = express();
 
-// CORS configuration
+// CORS configuration - Dynamic for development and production
+const allowedOrigins = [
+  // Development origins
+  'http://localhost:3000',
+  'http://localhost:3001', 
+  'http://localhost:5000',
+  'http://localhost:5001',
+  'http://localhost:5002',
+  'http://localhost:3002',
+  'http://localhost:3003',
+  // Production origins (add your domain here)
+  'https://g-tracker-three.vercel.app/',
+  'https://g-tracker-three.vercel.app/',
+  // Electron app origins
+  'file://',
+  'app://',
+  // Allow all localhost ports for development
+  /^https?:\/\/localhost:\d+$/,
+  /^https?:\/\/127\.0\.0\.1:\d+$/
+];
+
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list or matches regex patterns
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') {
+        return origin === allowed;
+      }
+      if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
