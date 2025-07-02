@@ -77,4 +77,130 @@
   padding: 1rem 1.2rem;
   font-size: 1rem;
   box-shadow: 0 1px 4px 0 rgba(0,0,0,0.07);
+  position: relative;
+}
+
+.journal-entry-text {
+  margin-bottom: 0.5rem;
+}
+
+.journal-entry-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.journal-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #90caf9;
+}
+
+.journal-edit-btn:hover {
+  background: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+}
+
+.journal-delete-btn:hover {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.journal-edit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.journal-edit-textarea {
+  width: 100%;
+  background: #1e242c;
+  color: #cfd8dc;
+  border: 1px solid #4a5568;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1rem;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+}
+
+.journal-edit-textarea:focus {
+  border-color: #2196f3;
+}
+
+.journal-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.journal-edit-btn.journal-edit-save {
+  background: #2196f3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.journal-edit-btn.journal-edit-save:hover {
+  background: #1976d2;
+}
+
+.journal-edit-btn.journal-edit-cancel {
+  background: #4a5568;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.journal-edit-btn.journal-edit-cancel:hover {
+  background: #2d3748;
+}
+
+.journal-delete-confirm-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.journal-delete-confirm-btn:hover {
+  background: #d32f2f;
+}
+
+.journal-delete-cancel-btn {
+  background: #4a5568;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.journal-delete-cancel-btn:hover {
+  background: #2d3748;
 } 

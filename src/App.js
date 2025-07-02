@@ -7,6 +7,7 @@ import ProgressBar from './components/ProgressBar';
 import JournalPreview from './components/JournalPreview';
 import TaskGraph from './components/TaskGraph';
 import { useState, useEffect } from 'react';
+import { taskAPI, journalAPI } from './api';
 
 const getToday = () => new Date().toISOString().slice(0, 10);
 
@@ -31,76 +32,120 @@ const getLastWeek = () => {
   return week;
 };
 
-const defaultTasks = [
-  { id: 1, text: 'Implement user authentication', completed: false, date: getToday() },
-  { id: 2, text: 'Set up database connection', completed: false, date: getToday() },
-  { id: 3, text: 'Create API endpoints', completed: false, date: getToday() },
-  { id: 4, text: 'Design UI components', completed: false, date: getToday() },
-  { id: 5, text: 'Write unit tests', completed: false, date: getToday() },
-  { id: 6, text: 'Deploy application', completed: false, date: getToday() },
-];
-const defaultJournal = [
-  { id: 1, text: 'Worked on UI components and fixed bugs.', date: getToday() },
-  { id: 2, text: 'Set up authentication and tested login flow.', date: getToday() },
-  { id: 3, text: 'Brainstormed new features for the dashboard.', date: getToday() },
-];
-
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem('devtrackr_tasks');
-    return saved ? JSON.parse(saved) : defaultTasks;
-  });
-  const [journalEntries, setJournalEntries] = useState(() => {
-    const saved = localStorage.getItem('devtrackr_journal');
-    return saved ? JSON.parse(saved) : defaultJournal;
-  });
+  const [tasks, setTasks] = useState([]);
+  const [journalEntries, setJournalEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load data from API on mount
   useEffect(() => {
-    // Force clear localStorage
-    localStorage.clear();
-    
     const loadData = async () => {
-      // ... rest of your code
+      try {
+        const [tasksData, journalData] = await Promise.all([
+          taskAPI.getAll(),
+          journalAPI.getAll(),
+        ]);
+        setTasks(tasksData);
+        setJournalEntries(journalData);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, []);
-  useEffect(() => {
-    localStorage.setItem('devtrackr_tasks', JSON.stringify(tasks));
-  }, [tasks]);
-  useEffect(() => {
-    localStorage.setItem('devtrackr_journal', JSON.stringify(journalEntries));
-  }, [journalEntries]);
 
   // Task handlers
-  const addTask = (text) => {
-    setTasks([
-      ...tasks,
-      { id: Date.now(), text, completed: false, date: getToday() },
-    ]);
+  const addTask = async (text) => {
+    try {
+      const newTask = await taskAPI.create(text, getToday());
+      setTasks([newTask, ...tasks]);
+    } catch (error) {
+      console.error('Failed to add task:', error);
+    }
   };
-  const toggleTask = (id) => {
-    setTasks(tasks.map(task =>
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+
+  const toggleTask = async (id) => {
+    try {
+      const taskToUpdate = tasks.find(t => t.id === id);
+      const updatedTask = await taskAPI.update(id, !taskToUpdate.completed);
+      setTasks(tasks.map(task =>
+        task.id === id ? updatedTask : task
+      ));
+    } catch (error) {
+      console.error('Failed to toggle task:', error);
+    }
+  };
+
+  const editTask = async (id, text) => {
+    const prevTasks = tasks;
+    try {
+      const updatedTask = await taskAPI.edit(id, text);
+      setTasks(tasks.map(task =>
+        task.id === id ? updatedTask : task
+      ));
+    } catch (error) {
+      setTasks(prevTasks);
+      console.error('Failed to edit task:', error);
+    }
+  };
+
+  const deleteTask = async (id) => {
+    const prevTasks = tasks;
+    setTasks(tasks.filter(task => task.id !== id));
+    try {
+      await taskAPI.delete(id);
+    } catch (error) {
+      setTasks(prevTasks);
+      console.error('Failed to delete task:', error);
+    }
   };
 
   // Journal handlers
-  const addJournalEntry = (text) => {
-    setJournalEntries([
-      { id: Date.now(), text, date: getToday() },
-      ...journalEntries,
-    ]);
+  const addJournalEntry = async (text) => {
+    try {
+      const newEntry = await journalAPI.create(text, getToday());
+      setJournalEntries([newEntry, ...journalEntries]);
+    } catch (error) {
+      console.error('Failed to add journal entry:', error);
+    }
+  };
+
+  const editJournalEntry = async (id, text) => {
+    const prevEntries = journalEntries;
+    try {
+      const updatedEntry = await journalAPI.edit(id, text);
+      setJournalEntries(journalEntries.map(entry =>
+        entry.id === id ? updatedEntry : entry
+      ));
+    } catch (error) {
+      setJournalEntries(prevEntries);
+      console.error('Failed to edit journal entry:', error);
+    }
+  };
+
+  const deleteJournalEntry = async (id) => {
+    const prevEntries = journalEntries;
+    setJournalEntries(journalEntries.filter(entry => entry.id !== id));
+    try {
+      await journalAPI.delete(id);
+    } catch (error) {
+      setJournalEntries(prevEntries);
+      console.error('Failed to delete journal entry:', error);
+    }
   };
 
   // Dashboard data
-  const todayTasks = tasks.filter(t => t.date === getToday());
+  const todayTasks = tasks.filter(t => t.date.slice(0, 10) === getToday());
   const todayCompleted = todayTasks.filter(t => t.completed);
   const weekDates = getThisWeek();
   const weekData = weekDates.map(date =>
-    tasks.filter(t => t.date === date && t.completed).length
+    tasks.filter(t => t.date.slice(0, 10) === date && t.completed).length
   );
   const weekTotal = weekDates.map(date =>
-    tasks.filter(t => t.date === date).length
+    tasks.filter(t => t.date.slice(0, 10) === date).length
   );
   const weekPercent = weekTotal.reduce((acc, t, i) => acc + (t ? weekData[i] / t : 0), 0) / 7 * 100;
   const weekChange = '+10%'; // Placeholder for now
@@ -108,13 +153,17 @@ function App() {
   // Insights data (last week)
   const lastWeekDates = getLastWeek();
   const lastWeekData = lastWeekDates.map(date =>
-    tasks.filter(t => t.date === date && t.completed).length
+    tasks.filter(t => t.date.slice(0, 10) === date && t.completed).length
   );
   const lastWeekTotal = lastWeekDates.map(date =>
-    tasks.filter(t => t.date === date).length
+    tasks.filter(t => t.date.slice(0, 10) === date).length
   );
   const lastWeekPercent = lastWeekTotal.reduce((acc, t, i) => acc + (t ? lastWeekData[i] / t : 0), 0) / 7 * 100;
-  const lastWeekJournals = journalEntries.filter(e => lastWeekDates.includes(e.date));
+  const lastWeekJournals = journalEntries.filter(e => lastWeekDates.includes(e.date.slice(0, 10)));
+
+  if (loading) {
+    return <div style={{ color: '#fff', textAlign: 'center', padding: '2rem' }}>Loading...</div>;
+  }
 
   return (
     <div className="App">
@@ -138,9 +187,9 @@ function App() {
             </div>
           </>
         )}
-        {activeTab === 'journal' && <JournalTracker entries={journalEntries} addEntry={addJournalEntry} />}
+        {activeTab === 'journal' && <JournalTracker entries={journalEntries} addEntry={addJournalEntry} editEntry={editJournalEntry} deleteEntry={deleteJournalEntry} />}
         {activeTab === 'stats' && <Insights percent={Math.round(lastWeekPercent)} days={lastWeekData} journals={lastWeekJournals} />}
-        {activeTab === 'task' && <TaskTracker tasks={tasks} addTask={addTask} toggleTask={toggleTask} />}
+        {activeTab === 'task' && <TaskTracker tasks={tasks} addTask={addTask} toggleTask={toggleTask} editTask={editTask} deleteTask={deleteTask} />}
       </div>
     </div>
   );

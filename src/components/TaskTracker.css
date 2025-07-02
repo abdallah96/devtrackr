@@ -188,10 +188,128 @@
   color: #90caf9;
 }
 
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.task-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #90caf9;
+}
+
+.task-edit-btn:hover {
+  background: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+}
+
+.task-delete-btn:hover {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.task-edit-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.task-edit-input {
+  flex: 1;
+  background: #232b36;
+  color: #cfd8dc;
+  border: 1px solid #4a5568;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  outline: none;
+}
+
+.task-edit-input:focus {
+  border-color: #2196f3;
+}
+
+.task-edit-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.task-edit-btn.task-edit-save {
+  background: #2196f3;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.task-edit-btn.task-edit-save:hover {
+  background: #1976d2;
+}
+
+.task-edit-btn.task-edit-cancel {
+  background: #4a5568;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.task-edit-btn.task-edit-cancel:hover {
+  background: #2d3748;
+}
+
 .task-checkbox {
   width: 22px;
   height: 22px;
   accent-color: #2196f3;
   border-radius: 4px;
-  margin-left: 1.5rem;
+}
+
+.task-delete-cancel-btn:hover {
+  background: #2d3748;
+}
+
+.task-delete-confirm-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.task-delete-confirm-btn:hover {
+  background: #d32f2f;
+}
+
+.task-delete-cancel-btn {
+  background: #4a5568;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 500;
+  margin-left: 4px;
 } 
