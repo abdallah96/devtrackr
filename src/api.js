@@ -2,7 +2,7 @@
 const getApiBaseUrl = () => {
   if (process.env.NODE_ENV === 'production') {
     // In production, use relative URL (same domain)
-    return '/api';
+    return process.env.REACT_APP_API_BASE_URL || 'https://devtrackr-one.vercel.app/api';
   }
   
   // In development, try to detect the backend port
