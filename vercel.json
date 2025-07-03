@@ -44,13 +44,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "rewrites": [ 
-  { "source": "/api/hello", "destination": "/api/hello.js" },
-  { "source": "/api/tasks", "destination": "/api/tasks.js" },
-  { "source": "/api/tasks/:id", "destination": "/api/tasks/[id].js" },
-  { "source": "/api/journal", "destination": "/api/journal.js" },
-  { "source": "/api/journal/:id", "destination": "/api/journal/[id].js" },
-    { "source": "/api/:path*", "destination": "/api/:path*.js" }
   ]
 } 
