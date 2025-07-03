@@ -14,12 +14,15 @@
       "use": "@vercel/node"
     }
   ],
-  
+  "rewrites": [
+    { "source": "/api/hello", "destination": "/api/hello.js" },
+    { "source": "/api/tasks", "destination": "/api/tasks.js" },
+    { "source": "/api/tasks/:id", "destination": "/api/tasks/[id].js" },
+    { "source": "/api/journal", "destination": "/api/journal.js" },
+    { "source": "/api/journal/:id", "destination": "/api/journal/[id].js" },
+    { "source": "/api/:path*", "destination": "/api/:path*.js" }
+  ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
     {
       "src": "/static/(.*)",
       "dest": "/static/$1"
@@ -45,5 +48,4 @@
       "dest": "/index.html"
     }
   ]
-  
-} 
+}
