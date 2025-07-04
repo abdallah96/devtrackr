@@ -1,12 +1,13 @@
 .header {
-  background: #1e242c;
+  background: var(--bg-secondary);
   padding: 1rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #2c3e50;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid var(--border-light);
+  box-shadow: 0 2px 4px var(--shadow-light);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .header__logo-row {
@@ -19,7 +20,7 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--accent-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,10 +31,11 @@
 }
 
 .header__logo {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1.25rem;
   font-weight: 700;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: color 0.3s ease;
 }
 
 .header__nav {
@@ -42,7 +44,7 @@
 }
 
 .header__link {
-  color: #90a4ae;
+  color: var(--text-muted);
   text-decoration: none;
   font-weight: 500;
   padding: 0.5rem 1rem;
@@ -56,12 +58,16 @@
 }
 
 .header__link:hover {
-  color: #ffffff;
+  color: var(--text-primary);
   background: rgba(255, 255, 255, 0.1);
 }
 
+.light-theme .header__link:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
 .header__link--active {
-  color: #667eea;
+  color: var(--accent-color);
   background: rgba(102, 126, 234, 0.1);
   font-weight: 600;
 }
@@ -80,16 +86,17 @@
 }
 
 .header__user-name {
-  color: #cfd8dc;
+  color: var(--text-secondary);
   font-size: 0.875rem;
   font-weight: 500;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: color 0.3s ease;
 }
 
 .header__logout-btn {
   background: transparent;
   border: none;
-  color: #90a4ae;
+  color: var(--text-muted);
   font-size: 0.75rem;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
@@ -99,15 +106,19 @@
 }
 
 .header__logout-btn:hover {
-  color: #ff6b6b;
+  color: var(--error-color);
   background: rgba(255, 107, 107, 0.1);
+}
+
+.light-theme .header__logout-btn:hover {
+  background: rgba(220, 38, 38, 0.1);
 }
 
 .header__avatar {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--accent-gradient);
   color: #ffffff;
   display: flex;
   align-items: center;

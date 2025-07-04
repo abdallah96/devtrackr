@@ -8,6 +8,7 @@ import JournalPreview from './components/JournalPreview';
 import TaskGraph from './components/TaskGraph';
 import Login from './components/Login';
 import Register from './components/Register';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { useState, useEffect } from 'react';
 import { taskAPI, journalAPI, authAPI } from './api';
 
@@ -191,11 +192,15 @@ function App() {
 
   // Show authentication screens if not logged in
   if (!user) {
-    if (authMode === 'login') {
-      return <Login onLogin={handleLogin} onSwitchToRegister={() => setAuthMode('register')} />;
-    } else {
-      return <Register onRegister={handleRegister} onSwitchToLogin={() => setAuthMode('login')} />;
-    }
+    return (
+      <ThemeProvider>
+        {authMode === 'login' ? (
+          <Login onLogin={handleLogin} onSwitchToRegister={() => setAuthMode('register')} />
+        ) : (
+          <Register onRegister={handleRegister} onSwitchToLogin={() => setAuthMode('login')} />
+        )}
+      </ThemeProvider>
+    );
   }
 
   // Dashboard data
@@ -223,41 +228,47 @@ function App() {
   const lastWeekJournals = journalEntries.filter(e => lastWeekDates.includes(e.date.slice(0, 10)));
 
   if (loading) {
-    return <div style={{ color: '#fff', textAlign: 'center', padding: '2rem' }}>Loading...</div>;
+    return (
+      <ThemeProvider>
+        <div style={{ color: 'var(--text-primary)', textAlign: 'center', padding: '2rem' }}>Loading...</div>
+      </ThemeProvider>
+    );
   }
 
   return (
-    <div className="App">
-      <Header 
-        activeTab={activeTab} 
-        onNav={setActiveTab} 
-        user={user}
-        onLogout={handleLogout}
-      />
-      <div className="app-main-container">
-        {activeTab === 'dashboard' && (
-          <>
-            <div className="dashboard-title">Dashboard</div>
-            <div className="dashboard-section">
-              <div className="dashboard-section-title">Today's Progress</div>
-              <div style={{ marginBottom: '0.5rem', color: '#cfd8dc', fontSize: '0.98rem', fontWeight: 500 }}>Tasks Completed</div>
-              <ProgressBar label="" value={todayCompleted.length} max={todayTasks.length || 1} />
-            </div>
-            <div className="dashboard-section">
-              <div className="dashboard-section-title">Journal Preview</div>
-              <JournalPreview latestEntry={journalEntries[0]} />
-            </div>
-            <div className="dashboard-section">
-              <div className="dashboard-section-title">Weekly Productivity</div>
-              <TaskGraph percent={Math.round(weekPercent)} comparison={weekChange} days={weekData} />
-            </div>
-          </>
-        )}
-        {activeTab === 'journal' && <JournalTracker entries={journalEntries} addEntry={addJournalEntry} editEntry={editJournalEntry} deleteEntry={deleteJournalEntry} />}
-        {activeTab === 'stats' && <Insights percent={Math.round(lastWeekPercent)} days={lastWeekData} journals={lastWeekJournals} />}
-        {activeTab === 'task' && <TaskTracker tasks={tasks} addTask={addTask} toggleTask={toggleTask} editTask={editTask} deleteTask={deleteTask} />}
+    <ThemeProvider>
+      <div className="App">
+        <Header 
+          activeTab={activeTab} 
+          onNav={setActiveTab} 
+          user={user}
+          onLogout={handleLogout}
+        />
+        <div className="app-main-container">
+          {activeTab === 'dashboard' && (
+            <>
+              <div className="dashboard-title">Dashboard</div>
+              <div className="dashboard-section">
+                <div className="dashboard-section-title">Today's Progress</div>
+                <div style={{ marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.98rem', fontWeight: 500 }}>Tasks Completed</div>
+                <ProgressBar label="" value={todayCompleted.length} max={todayTasks.length || 1} />
+              </div>
+              <div className="dashboard-section">
+                <div className="dashboard-section-title">Journal Preview</div>
+                <JournalPreview latestEntry={journalEntries[0]} />
+              </div>
+              <div className="dashboard-section">
+                <div className="dashboard-section-title">Weekly Productivity</div>
+                <TaskGraph percent={Math.round(weekPercent)} comparison={weekChange} days={weekData} />
+              </div>
+            </>
+          )}
+          {activeTab === 'journal' && <JournalTracker entries={journalEntries} addEntry={addJournalEntry} editEntry={editJournalEntry} deleteEntry={deleteJournalEntry} />}
+          {activeTab === 'stats' && <Insights percent={Math.round(lastWeekPercent)} days={lastWeekData} journals={lastWeekJournals} />}
+          {activeTab === 'task' && <TaskTracker tasks={tasks} addTask={addTask} toggleTask={toggleTask} editTask={editTask} deleteTask={deleteTask} />}
+        </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 }
 
@@ -273,11 +284,11 @@ function Insights({ percent, days, journals }) {
       <div className="dashboard-section">
         <div className="dashboard-section-title">Last Week's Journal Entries</div>
         {journals.length === 0 ? (
-          <div style={{ color: '#90caf9', fontStyle: 'italic' }}>No journal entries for last week.</div>
+          <div style={{ color: 'var(--accent-color)', fontStyle: 'italic' }}>No journal entries for last week.</div>
         ) : (
-          <ul style={{ color: '#cfd8dc', fontSize: '1.1rem', paddingLeft: 0 }}>
+          <ul style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', paddingLeft: 0 }}>
             {journals.map(j => (
-              <li key={j.id} style={{ marginBottom: '1rem', listStyle: 'none', background: '#1e242c', borderRadius: 10, padding: '1rem 1.5rem' }}>{j.text}</li>
+              <li key={j.id} style={{ marginBottom: '1rem', listStyle: 'none', background: 'var(--bg-secondary)', borderRadius: 10, padding: '1rem 1.5rem' }}>{j.text}</li>
             ))}
           </ul>
         )}

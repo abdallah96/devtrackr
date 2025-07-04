@@ -1,56 +1,57 @@
 import React from 'react';
-import { Button } from '@headlessui/react';
+import ThemeToggle from './ThemeToggle';
 import './Header.css';
 
 const Header = ({ activeTab, onNav, user, onLogout }) => {
-  const navLinks = [
-    { label: 'Dashboard', key: 'dashboard' },
-    { label: 'Tasks', key: 'task' },
-    { label: 'Journal', key: 'journal' },
-    { label: 'Insights', key: 'stats' },
-  ];
-
-  const getUserInitials = (user) => {
-    if (user?.name) {
-      return user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    }
-    if (user?.email) {
-      return user.email[0].toUpperCase();
-    }
-    return 'U';
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   return (
     <header className="header">
       <div className="header__logo-row">
-        <div className="header__logo-icon">G</div>
-        <div className="header__logo">G-Tracker</div>
+        <div className="header__logo-icon">DT</div>
+        <h1 className="header__logo">DevTrackr</h1>
       </div>
+
       <nav className="header__nav">
-        {navLinks.map(link => (
-          <Button
-            key={link.key}
-            className={`header__link${activeTab === link.key ? ' header__link--active' : ''}`}
-            onClick={() => onNav && onNav(link.key)}
-          >
-            {link.label}
-          </Button>
-        ))}
+        <button
+          className={`header__link ${activeTab === 'dashboard' ? 'header__link--active' : ''}`}
+          onClick={() => onNav('dashboard')}
+        >
+          Dashboard
+        </button>
+        <button
+          className={`header__link ${activeTab === 'task' ? 'header__link--active' : ''}`}
+          onClick={() => onNav('task')}
+        >
+          Tasks
+        </button>
+        <button
+          className={`header__link ${activeTab === 'journal' ? 'header__link--active' : ''}`}
+          onClick={() => onNav('journal')}
+        >
+          Journal
+        </button>
+        <button
+          className={`header__link ${activeTab === 'stats' ? 'header__link--active' : ''}`}
+          onClick={() => onNav('stats')}
+        >
+          Insights
+        </button>
       </nav>
+
       <div className="header__profile">
-        {user && (
-          <div className="header__user-info">
-            <span className="header__user-name">{user.name || user.email}</span>
-            <Button 
-              className="header__logout-btn"
-              onClick={onLogout}
-            >
-              Sign out
-            </Button>
-          </div>
-        )}
+        <ThemeToggle />
+        <div className="header__user-info">
+          <div className="header__user-name">{user?.name || user?.email}</div>
+          <button className="header__logout-btn" onClick={onLogout}>
+            Sign out
+          </button>
+        </div>
         <div className="header__avatar">
-          {getUserInitials(user)}
+          {getInitials(user?.name || user?.email)}
         </div>
       </div>
     </header>
