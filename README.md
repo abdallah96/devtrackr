@@ -197,7 +197,7 @@ REACT_APP_API_PORT=5001
 ```
 
 ### Customization
-- **App Icon**: Replace `public/logo192.png`
+- **App Icon**: Replace `public/logo.png`
 - **Theme Colors**: Edit CSS variables in `src/index.css`
 - **Window Size**: Modify `public/electron.js` for desktop app
 
