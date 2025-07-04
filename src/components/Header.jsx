@@ -1,20 +1,6 @@
 import React from 'react';
+import { Button } from '@headlessui/react';
 import './Header.css';
-
-const G_LOGO = (
-  <div style={{
-    width: 32,
-    height: 32,
-    borderRadius: '50%',
-    background: '#2196f3',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10
-  }}>
-    <span style={{ color: '#fff', fontWeight: 700, fontSize: 20, fontFamily: 'Inter, Arial, sans-serif' }}>G</span>
-  </div>
-);
 
 const Header = ({ activeTab, onNav, user, onLogout }) => {
   const navLinks = [
@@ -37,37 +23,33 @@ const Header = ({ activeTab, onNav, user, onLogout }) => {
   return (
     <header className="header">
       <div className="header__logo-row">
-        {G_LOGO}
+        <div className="header__logo-icon">G</div>
         <div className="header__logo">G-Tracker</div>
       </div>
       <nav className="header__nav">
         {navLinks.map(link => (
-          <a
+          <Button
             key={link.key}
-            href="/"
-            role="button"
-            tabIndex={0}
             className={`header__link${activeTab === link.key ? ' header__link--active' : ''}`}
-            onClick={e => { e.preventDefault(); onNav && onNav(link.key); }}
+            onClick={() => onNav && onNav(link.key)}
           >
             {link.label}
-          </a>
+          </Button>
         ))}
       </nav>
       <div className="header__profile">
         {user && (
           <div className="header__user-info">
             <span className="header__user-name">{user.name || user.email}</span>
-            <button 
+            <Button 
               className="header__logout-btn"
               onClick={onLogout}
-              title="Logout"
             >
-              Logout
-            </button>
+              Sign out
+            </Button>
           </div>
         )}
-        <div className="header__avatar header__avatar--initials">
+        <div className="header__avatar">
           {getUserInitials(user)}
         </div>
       </div>

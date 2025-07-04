@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from '@headlessui/react';
 import './Login.css';
 
 const Login = ({ onLogin, onSwitchToRegister }) => {
@@ -6,87 +7,97 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
     email: '',
     password: ''
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
-
+    setLoading(true);
+    
     try {
       await onLogin(formData.email, formData.password);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h1>Welcome Back</h1>
-          <p>Sign in to continue your journey</p>
+    <div className="login-container">
+      <div className="login-card">
+        <div className="login-header">
+          <div className="login-logo">
+            <div className="login-logo-icon">DT</div>
+          </div>
+          <h1 className="login-title">Welcome Back</h1>
+          <p className="login-subtitle">Sign in to continue your journey</p>
         </div>
-        
-        <form onSubmit={handleSubmit} className="auth-form">
-          {error && <div className="auth-error">{error}</div>}
-          
+
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+
+        <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email" className="form-label">Email Address</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              required
+              className="form-input"
               placeholder="Enter your email"
+              required
             />
           </div>
-          
+
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password" className="form-label">Password</label>
             <input
               type="password"
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              required
+              className="form-input"
               placeholder="Enter your password"
+              required
             />
           </div>
-          
-          <button 
-            type="submit" 
-            className="auth-button"
+
+          <Button
+            type="submit"
+            className="login-button"
             disabled={loading}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
+            {loading ? 'Signing In...' : 'Sign In'}
+          </Button>
         </form>
-        
-        <div className="auth-footer">
-          <p>
-            Don't have an account?{' '}
-            <button 
-              type="button" 
-              className="auth-link"
-              onClick={onSwitchToRegister}
-            >
-              Sign up
-            </button>
-          </p>
+
+        <div className="switch-mode">
+          <span className="switch-mode-text">
+            Don't have an account?
+          </span>
+          <button
+            type="button"
+            className="switch-mode-button"
+            onClick={onSwitchToRegister}
+          >
+            Create Account
+          </button>
         </div>
       </div>
     </div>

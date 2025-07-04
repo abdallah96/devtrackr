@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from '@headlessui/react';
 import './Login.css';
 
 const Register = ({ onRegister, onSwitchToLogin }) => {
@@ -8,126 +9,135 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
     password: '',
     confirmPassword: ''
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
 
-    // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
-      setLoading(false);
       return;
     }
 
-    // Validate password length
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long');
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
     try {
       await onRegister(formData.name, formData.email, formData.password);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h1>Create Account</h1>
-          <p>Start your productivity journey today</p>
+    <div className="login-container">
+      <div className="login-card">
+        <div className="login-header">
+          <div className="login-logo">
+            <div className="login-logo-icon">DT</div>
+          </div>
+          <h1 className="login-title">Create Account</h1>
+          <p className="login-subtitle">Join DevTrackr to boost your productivity</p>
         </div>
-        
-        <form onSubmit={handleSubmit} className="auth-form">
-          {error && <div className="auth-error">{error}</div>}
-          
+
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+
+        <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="name">Name (Optional)</label>
+            <label htmlFor="name" className="form-label">Full Name</label>
             <input
               type="text"
               id="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Enter your name"
+              className="form-input"
+              placeholder="Enter your full name"
+              required
             />
           </div>
-          
+
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email" className="form-label">Email Address</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              required
+              className="form-input"
               placeholder="Enter your email"
+              required
             />
           </div>
-          
+
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password" className="form-label">Password</label>
             <input
               type="password"
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
+              className="form-input"
+              placeholder="Create a password"
               required
-              placeholder="Enter your password"
             />
           </div>
-          
+
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
+            <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
             <input
               type="password"
               id="confirmPassword"
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              required
+              className="form-input"
               placeholder="Confirm your password"
+              required
             />
           </div>
-          
-          <button 
-            type="submit" 
-            className="auth-button"
+
+          <Button
+            type="submit"
+            className="login-button"
             disabled={loading}
           >
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </Button>
         </form>
-        
-        <div className="auth-footer">
-          <p>
-            Already have an account?{' '}
-            <button 
-              type="button" 
-              className="auth-link"
-              onClick={onSwitchToLogin}
-            >
-              Sign in
-            </button>
-          </p>
+
+        <div className="switch-mode">
+          <span className="switch-mode-text">
+            Already have an account?
+          </span>
+          <button
+            type="button"
+            className="switch-mode-button"
+            onClick={onSwitchToLogin}
+          >
+            Sign In
+          </button>
         </div>
       </div>
     </div>

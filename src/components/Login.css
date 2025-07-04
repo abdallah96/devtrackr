@@ -1,46 +1,66 @@
-.auth-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.login-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #181e24;
+  padding: 2rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.auth-card {
-  background: rgba(30, 36, 44, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  padding: 2.5rem;
+.login-card {
+  background: #1e242c;
+  border: 1px solid #2c3e50;
+  border-radius: 16px;
+  padding: 3rem;
   width: 100%;
-  max-width: 400px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 420px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
 }
 
-.auth-header {
+.login-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
-.auth-header h1 {
-  color: #ffffff;
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
+.login-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.login-logo-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.25rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.auth-header p {
+.login-title {
+  color: #ffffff;
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.login-subtitle {
   color: #90a4ae;
   font-size: 1rem;
-  margin: 0;
+  margin: 0.5rem 0 0 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.auth-form {
+.login-form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -52,106 +72,129 @@
   gap: 0.5rem;
 }
 
-.form-group label {
+.form-label {
   color: #cfd8dc;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 500;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.form-group input {
+.form-input {
   padding: 0.75rem 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffffff;
+  border: 1px solid #4a5568;
+  border-radius: 8px;
   font-size: 1rem;
-  transition: all 0.3s ease;
+  background: #232b36;
+  color: #cfd8dc;
+  transition: all 0.2s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.form-group input:focus {
+.form-input:focus {
   outline: none;
   border-color: #667eea;
-  background: rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.form-group input::placeholder {
+.form-input::placeholder {
   color: #90a4ae;
 }
 
-.auth-button {
+.login-button {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   padding: 0.875rem 1.5rem;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   margin-top: 0.5rem;
 }
 
-.auth-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+.login-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px -5px rgba(102, 126, 234, 0.4);
 }
 
-.auth-button:disabled {
-  opacity: 0.7;
+.login-button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }
 
-.auth-error {
-  background: rgba(244, 67, 54, 0.1);
-  border: 1px solid rgba(244, 67, 54, 0.3);
-  color: #ff6b6b;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  text-align: center;
-}
-
-.auth-footer {
-  text-align: center;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.auth-footer p {
+.login-divider {
+  display: flex;
+  align-items: center;
+  margin: 2rem 0;
   color: #90a4ae;
-  margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
-.auth-link {
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #4a5568;
+}
+
+.login-divider span {
+  padding: 0 1rem;
+}
+
+.switch-mode {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.switch-mode-text {
+  color: #90a4ae;
+  font-size: 0.875rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.switch-mode-button {
   background: none;
   border: none;
   color: #667eea;
   font-weight: 600;
   cursor: pointer;
-  text-decoration: underline;
-  transition: color 0.3s ease;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  margin-left: 0.5rem;
 }
 
-.auth-link:hover {
-  color: #764ba2;
+.switch-mode-button:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.error-message {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: #ff6b6b;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  margin-bottom: 1rem;
 }
 
 /* Responsive design */
 @media (max-width: 480px) {
-  .auth-card {
-    padding: 2rem 1.5rem;
-    margin: 1rem;
+  .login-container {
+    padding: 1rem;
   }
   
-  .auth-header h1 {
-    font-size: 1.75rem;
+  .login-card {
+    padding: 2rem;
   }
   
-  .auth-header p {
-    font-size: 0.9rem;
+  .login-title {
+    font-size: 1.5rem;
   }
 } 

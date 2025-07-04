@@ -1,7 +1,7 @@
 .App {
   min-height: 100vh;
   background: #181e24;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -40,10 +40,10 @@
 }
 
 .App-nav button.active {
-  background: #2563eb;
+  background: #667eea;
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
 }
 
 .App-link {
@@ -53,22 +53,24 @@
 .app-main-container {
   max-width: 1280px;
   width: 100%;
-  padding: 20px 160px;
+  padding: 2rem;
   box-sizing: border-box;
+  background: #181e24;
+  min-height: calc(100vh - 80px);
 }
 
 .header {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 2rem;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #181e24;
-  height: 56px;
-  box-shadow: 0 1px 0 0 #23272f;
+  background: #1e242c;
+  height: 80px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 .header__nav {
@@ -85,15 +87,16 @@
 }
 
 .dashboard-title {
-  color: #fff;
+  color: #ffffff;
   font-size: 2.3rem;
   font-weight: 700;
   margin-bottom: 2.8rem;
   margin-top: 0;
+  text-align: center;
 }
 
 .dashboard-section-title {
-  color: #fff;
+  color: #cfd8dc;
   font-size: 1.15rem;
   font-weight: 600;
   margin: 2.2rem 0 1rem 0;
@@ -101,21 +104,27 @@
 
 @media (max-width: 1400px) {
   .app-main-container {
-    padding: 20px 40px;
+    padding: 1.5rem;
   }
   .header {
-    padding: 0 10px;
+    padding: 0 1.5rem;
   }
 }
 
 @media (max-width: 900px) {
   .app-main-container {
-    padding: 10px 10px;
+    padding: 1rem;
+  }
+  .header {
+    padding: 0 1rem;
   }
 }
 
 @media (max-width: 600px) {
   .app-main-container {
-    padding: 5px 2px;
+    padding: 0.5rem;
+  }
+  .header {
+    padding: 0 0.5rem;
   }
 } 
