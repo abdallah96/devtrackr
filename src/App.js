@@ -6,8 +6,10 @@ import Header from './components/Header';
 import ProgressBar from './components/ProgressBar';
 import JournalPreview from './components/JournalPreview';
 import TaskGraph from './components/TaskGraph';
+import Login from './components/Login';
+import Register from './components/Register';
 import { useState, useEffect } from 'react';
-import { taskAPI, journalAPI } from './api';
+import { taskAPI, journalAPI, authAPI } from './api';
 
 const getToday = () => new Date().toISOString().slice(0, 10);
 
@@ -37,25 +39,75 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [journalEntries, setJournalEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
-  // Load data from API on mount
+  // Check for existing authentication on mount
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [tasksData, journalData] = await Promise.all([
-          taskAPI.getAll(),
-          journalAPI.getAll(),
-        ]);
-        setTasks(tasksData);
-        setJournalEntries(journalData);
-      } catch (error) {
-        console.error('Failed to load data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+    const currentUser = authAPI.getCurrentUser();
+    if (currentUser && authAPI.isAuthenticated()) {
+      setUser(currentUser);
+      loadData();
+    } else {
+      setLoading(false);
+    }
   }, []);
+
+  // Load data from API
+  const loadData = async () => {
+    try {
+      const [tasksData, journalData] = await Promise.all([
+        taskAPI.getAll(),
+        journalAPI.getAll(),
+      ]);
+      setTasks(tasksData);
+      setJournalEntries(journalData);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      // If authentication fails, logout user
+      if (error.message.includes('Authentication required')) {
+        handleLogout();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Authentication handlers
+  const handleLogin = async (email, password) => {
+    setAuthLoading(true);
+    try {
+      const { user: userData, token } = await authAPI.login(email, password);
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      await loadData();
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleRegister = async (name, email, password) => {
+    setAuthLoading(true);
+    try {
+      const { user: userData, token } = await authAPI.register(email, password, name);
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      await loadData();
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    authAPI.logout();
+    setUser(null);
+    setTasks([]);
+    setJournalEntries([]);
+    setActiveTab('dashboard');
+  };
 
   // Task handlers
   const addTask = async (text) => {
@@ -137,6 +189,15 @@ function App() {
     }
   };
 
+  // Show authentication screens if not logged in
+  if (!user) {
+    if (authMode === 'login') {
+      return <Login onLogin={handleLogin} onSwitchToRegister={() => setAuthMode('register')} />;
+    } else {
+      return <Register onRegister={handleRegister} onSwitchToLogin={() => setAuthMode('login')} />;
+    }
+  }
+
   // Dashboard data
   const todayTasks = tasks.filter(t => t.date.slice(0, 10) === getToday());
   const todayCompleted = todayTasks.filter(t => t.completed);
@@ -167,7 +228,12 @@ function App() {
 
   return (
     <div className="App">
-      <Header activeTab={activeTab} onNav={setActiveTab} />
+      <Header 
+        activeTab={activeTab} 
+        onNav={setActiveTab} 
+        user={user}
+        onLogout={handleLogout}
+      />
       <div className="app-main-container">
         {activeTab === 'dashboard' && (
           <>
