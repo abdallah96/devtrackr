@@ -8,9 +8,11 @@ import JournalPreview from './components/JournalPreview';
 import TaskGraph from './components/TaskGraph';
 import Login from './components/Login';
 import Register from './components/Register';
+import WorkspaceManager from './components/WorkspaceManager';
+import CalendarIntegration from './components/CalendarIntegration';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { useState, useEffect } from 'react';
-import { taskAPI, journalAPI, authAPI } from './api';
+import { taskAPI, journalAPI, authAPI, workspaceAPI } from './api';
 
 const getToday = () => new Date().toISOString().slice(0, 10);
 
@@ -24,6 +26,7 @@ const getThisWeek = () => {
   }
   return week;
 };
+
 const getLastWeek = () => {
   const today = new Date();
   const week = [];
@@ -39,6 +42,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [tasks, setTasks] = useState([]);
   const [journalEntries, setJournalEntries] = useState([]);
+  const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
   const [user, setUser] = useState(null);
@@ -58,12 +62,14 @@ function App() {
   // Load data from API
   const loadData = async () => {
     try {
-      const [tasksData, journalData] = await Promise.all([
+      const [tasksData, journalData, workspacesData] = await Promise.all([
         taskAPI.getAll(),
         journalAPI.getAll(),
+        workspaceAPI.getAll().catch(() => []) // Workspaces might not exist yet
       ]);
       setTasks(tasksData);
       setJournalEntries(journalData);
+      setWorkspaces(workspacesData);
     } catch (error) {
       console.error('Failed to load data:', error);
       // If authentication fails, logout user
@@ -107,6 +113,7 @@ function App() {
     setUser(null);
     setTasks([]);
     setJournalEntries([]);
+    setWorkspaces([]);
     setActiveTab('dashboard');
   };
 
@@ -261,18 +268,59 @@ function App() {
                 <div className="dashboard-section-title">Weekly Productivity</div>
                 <TaskGraph percent={Math.round(weekPercent)} comparison={weekChange} days={weekData} />
               </div>
+              {workspaces.length > 0 && (
+                <div className="dashboard-section">
+                  <div className="dashboard-section-title">Workspaces Overview</div>
+                  <div className="workspace-preview">
+                    <p>You have {workspaces.length} workspace{workspaces.length !== 1 ? 's' : ''} available</p>
+                    <button 
+                      className="dashboard-action-btn"
+                      onClick={() => setActiveTab('workspaces')}
+                    >
+                      Manage Workspaces
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
-          {activeTab === 'journal' && <JournalTracker entries={journalEntries} addEntry={addJournalEntry} editEntry={editJournalEntry} deleteEntry={deleteJournalEntry} />}
-          {activeTab === 'stats' && <Insights percent={Math.round(lastWeekPercent)} days={lastWeekData} journals={lastWeekJournals} />}
-          {activeTab === 'task' && <TaskTracker tasks={tasks} addTask={addTask} toggleTask={toggleTask} editTask={editTask} deleteTask={deleteTask} />}
+          {activeTab === 'journal' && (
+            <JournalTracker 
+              entries={journalEntries} 
+              addEntry={addJournalEntry} 
+              editEntry={editJournalEntry} 
+              deleteEntry={deleteJournalEntry} 
+            />
+          )}
+          {activeTab === 'stats' && (
+            <Insights 
+              percent={Math.round(lastWeekPercent)} 
+              days={lastWeekData} 
+              journals={lastWeekJournals} 
+            />
+          )}
+          {activeTab === 'task' && (
+            <TaskTracker 
+              tasks={tasks} 
+              addTask={addTask} 
+              toggleTask={toggleTask} 
+              editTask={editTask} 
+              deleteTask={deleteTask} 
+            />
+          )}
+          {activeTab === 'workspaces' && (
+            <WorkspaceManager user={user} />
+          )}
+          {activeTab === 'calendar' && (
+            <CalendarIntegration user={user} />
+          )}
         </div>
       </div>
     </ThemeProvider>
   );
 }
 
-// Dummy Insights component for now
+// Insights component
 function Insights({ percent, days, journals }) {
   return (
     <div>

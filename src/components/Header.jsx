@@ -35,6 +35,18 @@ const Header = ({ activeTab, onNav, user, onLogout }) => {
           Journal
         </button>
         <button
+          className={`header__link ${activeTab === 'workspaces' ? 'header__link--active' : ''}`}
+          onClick={() => onNav('workspaces')}
+        >
+          Workspaces
+        </button>
+        <button
+          className={`header__link ${activeTab === 'calendar' ? 'header__link--active' : ''}`}
+          onClick={() => onNav('calendar')}
+        >
+          Calendar
+        </button>
+        <button
           className={`header__link ${activeTab === 'stats' ? 'header__link--active' : ''}`}
           onClick={() => onNav('stats')}
         >

@@ -3,6 +3,22 @@ const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { google } = require('googleapis');
+const { OAuth2Client } = require('google-auth-library');
+
+// Get JWT secret from environment or generate a random one
+const JWT_SECRET = process.env.JWT_SECRET || require('crypto').randomBytes(64).toString('hex');
+
+// Google OAuth2 configuration
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/google/callback';
+
+const googleOAuth2Client = new OAuth2Client(
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REDIRECT_URI
+);
 
 const app = express();
 
@@ -70,7 +86,7 @@ const verifyToken = (req) => {
   const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = jwt.verify(token, JWT_SECRET);
     return decoded;
   } catch (error) {
     console.error('Token verification failed:', error);
@@ -116,7 +132,7 @@ app.post('/api/auth/register', async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'your-secret-key',
+      JWT_SECRET,
       { expiresIn: '7d' }
     );
 
@@ -161,7 +177,7 @@ app.post('/api/auth/login', async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'your-secret-key',
+      JWT_SECRET,
       { expiresIn: '7d' }
     );
 
@@ -377,6 +393,456 @@ app.delete('/api/journal', async (req, res) => {
     res.status(204).end();
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Google Calendar Integration Routes
+app.get('/api/auth/google/url', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const scopes = [
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/calendar.events'
+    ];
+    
+    const authUrl = googleOAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes,
+      state: JSON.stringify({ userId: user.userId }),
+      prompt: 'consent'
+    });
+    
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Google auth URL error:', error);
+    res.status(500).json({ error: 'Failed to generate auth URL' });
+  }
+});
+
+app.post('/api/auth/google/callback', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ error: 'Authorization code is required' });
+    }
+    
+    const { tokens } = await googleOAuth2Client.getToken(code);
+    
+    // Store tokens in database
+    await prisma.user.update({
+      where: { id: user.userId },
+      data: {
+        googleAccessToken: tokens.access_token,
+        googleRefreshToken: tokens.refresh_token,
+        googleCalendarId: 'primary'
+      }
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Google auth callback error:', error);
+    res.status(500).json({ error: 'Failed to authenticate with Google' });
+  }
+});
+
+app.get('/api/calendar/events', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const userData = await prisma.user.findUnique({
+      where: { id: user.userId }
+    });
+    
+    if (!userData.googleAccessToken) {
+      return res.status(400).json({ error: 'Google Calendar not connected' });
+    }
+    
+    googleOAuth2Client.setCredentials({
+      access_token: userData.googleAccessToken,
+      refresh_token: userData.googleRefreshToken
+    });
+    
+    const calendar = google.calendar({ version: 'v3', auth: googleOAuth2Client });
+    
+    const { timeMin, timeMax } = req.query;
+    
+    const response = await calendar.events.list({
+      calendarId: 'primary',
+      timeMin: timeMin || new Date().toISOString(),
+      timeMax: timeMax,
+      singleEvents: true,
+      orderBy: 'startTime'
+    });
+    
+    res.json(response.data.items);
+  } catch (error) {
+    console.error('Calendar events error:', error);
+    res.status(500).json({ error: 'Failed to fetch calendar events' });
+  }
+});
+
+app.post('/api/calendar/sync', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const userData = await prisma.user.findUnique({
+      where: { id: user.userId }
+    });
+    
+    if (!userData.googleAccessToken) {
+      return res.status(400).json({ error: 'Google Calendar not connected' });
+    }
+    
+    googleOAuth2Client.setCredentials({
+      access_token: userData.googleAccessToken,
+      refresh_token: userData.googleRefreshToken
+    });
+    
+    const calendar = google.calendar({ version: 'v3', auth: googleOAuth2Client });
+    
+    const response = await calendar.events.list({
+      calendarId: 'primary',
+      timeMin: new Date().toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime'
+    });
+    
+    const events = response.data.items || [];
+    
+    // Sync events to database
+    for (const event of events) {
+      if (event.id) {
+        await prisma.calendarEvent.upsert({
+          where: { googleEventId: event.id },
+          update: {
+            title: event.summary || 'Untitled Event',
+            description: event.description || '',
+            startTime: new Date(event.start.dateTime || event.start.date),
+            endTime: new Date(event.end.dateTime || event.end.date),
+            location: event.location || '',
+            isAllDay: !event.start.dateTime,
+            calendarId: 'primary'
+          },
+          create: {
+            googleEventId: event.id,
+            title: event.summary || 'Untitled Event',
+            description: event.description || '',
+            startTime: new Date(event.start.dateTime || event.start.date),
+            endTime: new Date(event.end.dateTime || event.end.date),
+            location: event.location || '',
+            isAllDay: !event.start.dateTime,
+            calendarId: 'primary',
+            userId: user.userId
+          }
+        });
+      }
+    }
+    
+    res.json({ success: true, eventsCount: events.length });
+  } catch (error) {
+    console.error('Calendar sync error:', error);
+    res.status(500).json({ error: 'Failed to sync calendar events' });
+  }
+});
+
+// Workspace Management Routes
+app.get('/api/workspaces', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const workspaces = await prisma.workspace.findMany({
+      where: {
+        OR: [
+          { ownerId: user.userId },
+          { members: { some: { userId: user.userId } } }
+        ]
+      },
+      include: {
+        owner: { select: { id: true, name: true, email: true } },
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true } }
+          }
+        },
+        teams: {
+          include: {
+            members: {
+              include: {
+                user: { select: { id: true, name: true, email: true } }
+              }
+            }
+          }
+        },
+        _count: {
+          select: { tasks: true, journalEntries: true }
+        }
+      }
+    });
+    
+    res.json(workspaces);
+  } catch (error) {
+    console.error('Workspaces fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch workspaces' });
+  }
+});
+
+app.post('/api/workspaces', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { name, description, color } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Workspace name is required' });
+    }
+    
+    const workspace = await prisma.workspace.create({
+      data: {
+        name,
+        description,
+        color,
+        ownerId: user.userId
+      },
+      include: {
+        owner: { select: { id: true, name: true, email: true } },
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true } }
+          }
+        }
+      }
+    });
+    
+    res.json(workspace);
+  } catch (error) {
+    console.error('Workspace creation error:', error);
+    res.status(500).json({ error: 'Failed to create workspace' });
+  }
+});
+
+app.put('/api/workspaces/:id', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { id } = req.params;
+    const { name, description, color } = req.body;
+    
+    // Check if user is owner or admin
+    const workspace = await prisma.workspace.findFirst({
+      where: {
+        id: parseInt(id),
+        OR: [
+          { ownerId: user.userId },
+          { members: { some: { userId: user.userId, role: 'admin' } } }
+        ]
+      }
+    });
+    
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found or access denied' });
+    }
+    
+    const updatedWorkspace = await prisma.workspace.update({
+      where: { id: parseInt(id) },
+      data: { name, description, color },
+      include: {
+        owner: { select: { id: true, name: true, email: true } },
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true } }
+          }
+        }
+      }
+    });
+    
+    res.json(updatedWorkspace);
+  } catch (error) {
+    console.error('Workspace update error:', error);
+    res.status(500).json({ error: 'Failed to update workspace' });
+  }
+});
+
+app.post('/api/workspaces/:id/invite', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { id } = req.params;
+    const { email, role = 'member' } = req.body;
+    
+    // Check if user is owner or admin
+    const workspace = await prisma.workspace.findFirst({
+      where: {
+        id: parseInt(id),
+        OR: [
+          { ownerId: user.userId },
+          { members: { some: { userId: user.userId, role: 'admin' } } }
+        ]
+      }
+    });
+    
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found or access denied' });
+    }
+    
+    // Find user by email
+    const invitedUser = await prisma.user.findUnique({
+      where: { email }
+    });
+    
+    if (!invitedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Add user to workspace
+    const member = await prisma.workspaceMember.create({
+      data: {
+        userId: invitedUser.id,
+        workspaceId: parseInt(id),
+        role
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } }
+      }
+    });
+    
+    res.json(member);
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'User is already a member of this workspace' });
+    }
+    console.error('Workspace invite error:', error);
+    res.status(500).json({ error: 'Failed to invite user to workspace' });
+  }
+});
+
+// Team Management Routes
+app.get('/api/workspaces/:workspaceId/teams', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { workspaceId } = req.params;
+    
+    // Check if user has access to workspace
+    const workspace = await prisma.workspace.findFirst({
+      where: {
+        id: parseInt(workspaceId),
+        OR: [
+          { ownerId: user.userId },
+          { members: { some: { userId: user.userId } } }
+        ]
+      }
+    });
+    
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found or access denied' });
+    }
+    
+    const teams = await prisma.team.findMany({
+      where: { workspaceId: parseInt(workspaceId) },
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true } }
+          }
+        },
+        _count: {
+          select: { tasks: true }
+        }
+      }
+    });
+    
+    res.json(teams);
+  } catch (error) {
+    console.error('Teams fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch teams' });
+  }
+});
+
+app.post('/api/workspaces/:workspaceId/teams', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { workspaceId } = req.params;
+    const { name, description, color } = req.body;
+    
+    // Check if user has admin access to workspace
+    const workspace = await prisma.workspace.findFirst({
+      where: {
+        id: parseInt(workspaceId),
+        OR: [
+          { ownerId: user.userId },
+          { members: { some: { userId: user.userId, role: 'admin' } } }
+        ]
+      }
+    });
+    
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found or access denied' });
+    }
+    
+    const team = await prisma.team.create({
+      data: {
+        name,
+        description,
+        color,
+        workspaceId: parseInt(workspaceId)
+      },
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true } }
+          }
+        }
+      }
+    });
+    
+    // Add creator as team lead
+    await prisma.teamMember.create({
+      data: {
+        userId: user.userId,
+        teamId: team.id,
+        role: 'lead'
+      }
+    });
+    
+    res.json(team);
+  } catch (error) {
+    console.error('Team creation error:', error);
+    res.status(500).json({ error: 'Failed to create team' });
   }
 });
 
