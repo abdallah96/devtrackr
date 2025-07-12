@@ -31,6 +31,10 @@ model User {
   
   // Calendar events
   calendarEvents    CalendarEvent[]
+  
+  // Time tracking
+  timeEntries       TimeEntry[]
+  activeTimeEntry   TimeEntry?         @relation("ActiveTimeEntry")
 }
 
 model Workspace {
@@ -50,6 +54,7 @@ model Workspace {
   tasks       Task[]
   journalEntries JournalEntry[]
   calendarEvents CalendarEvent[]
+  timeEntries TimeEntry[]
 }
 
 model WorkspaceMember {
@@ -105,6 +110,11 @@ model Task {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
+  // Time tracking
+  estimatedHours    Float?
+  totalTimeSpent    Int      @default(0) // Total seconds spent on this task
+  isTimeTracking    Boolean  @default(false) // Is currently being tracked
+  
   // Relationships
   userId      Int
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -116,6 +126,32 @@ model Task {
   // Calendar integration
   calendarEventId String?
   calendarEvent   CalendarEvent? @relation(fields: [calendarEventId], references: [googleEventId])
+  
+  // Time entries
+  timeEntries     TimeEntry[]
+}
+
+model TimeEntry {
+  id          String    @id @default(cuid())
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?      // Duration in seconds (calculated when stopped)
+  description String?
+  isActive    Boolean   @default(true) // Is this time entry currently running
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relationships
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId      Int
+  task        Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  workspaceId Int?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  // Active time entry relationship
+  activeUserId Int?      @unique
+  activeUser   User?     @relation("ActiveTimeEntry", fields: [activeUserId], references: [id])
 }
 
 model JournalEntry {
