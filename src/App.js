@@ -2,6 +2,7 @@ import './App.css';
 import JournalTracker from './components/JournalTracker';
 import Stats from './components/Stats';
 import TaskTracker from './components/TaskTracker';
+import TimeTracker from './components/TimeTracker';
 import Header from './components/Header';
 import ProgressBar from './components/ProgressBar';
 import JournalPreview from './components/JournalPreview';
@@ -306,6 +307,13 @@ function App() {
               toggleTask={toggleTask} 
               editTask={editTask} 
               deleteTask={deleteTask} 
+            />
+          )}
+          {activeTab === 'time' && (
+            <TimeTracker 
+              user={user} 
+              tasks={tasks} 
+              workspaces={workspaces} 
             />
           )}
           {activeTab === 'workspaces' && (

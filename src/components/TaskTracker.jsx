@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@headlessui/react';
 import './TaskTracker.css';
 import EditIcon from '../Icons/EditIcon';
 import DeleteIcon from '../Icons/DeleteIcon';
+import { timeAPI } from '../api';
+import { Play, Square, Clock } from 'lucide-react';
 
 function TaskTracker({ tasks, addTask, toggleTask, editTask, deleteTask }) {
   const [newTask, setNewTask] = useState('');
@@ -10,6 +12,23 @@ function TaskTracker({ tasks, addTask, toggleTask, editTask, deleteTask }) {
   const [editText, setEditText] = useState('');
   const [deletingTasks, setDeletingTasks] = useState(new Set());
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [activeTimeEntry, setActiveTimeEntry] = useState(null);
+  const [trackingStates, setTrackingStates] = useState(new Set());
+
+  // Load active time entry on component mount
+  useEffect(() => {
+    loadActiveTimeEntry();
+  }, []);
+
+  const loadActiveTimeEntry = async () => {
+    try {
+      const entry = await timeAPI.getActiveEntry();
+      setActiveTimeEntry(entry);
+    } catch (err) {
+      // No active entry is fine
+      setActiveTimeEntry(null);
+    }
+  };
 
   const handleAddTask = () => {
     if (newTask.trim() === '') return;
@@ -57,6 +76,49 @@ function TaskTracker({ tasks, addTask, toggleTask, editTask, deleteTask }) {
     setConfirmDeleteId(null);
   };
 
+  const handleStartTracking = async (taskId) => {
+    try {
+      setTrackingStates(prev => new Set(prev).add(taskId));
+      const entry = await timeAPI.startTracking(taskId, '');
+      setActiveTimeEntry(entry);
+    } catch (err) {
+      console.error('Failed to start tracking:', err);
+    } finally {
+      setTrackingStates(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleStopTracking = async () => {
+    try {
+      setTrackingStates(prev => new Set(prev).add(activeTimeEntry.taskId));
+      await timeAPI.stopTracking();
+      setActiveTimeEntry(null);
+      // Refresh tasks to get updated time
+      window.location.reload(); // Simple refresh, could be optimized
+    } catch (err) {
+      console.error('Failed to stop tracking:', err);
+    } finally {
+      setTrackingStates(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(activeTimeEntry?.taskId);
+        return newSet;
+      });
+    }
+  };
+
+  const isTaskBeingTracked = (taskId) => {
+    return activeTimeEntry && activeTimeEntry.task.id === taskId;
+  };
+
+  const formatTimeSpent = (seconds) => {
+    if (!seconds) return '';
+    return timeAPI.formatDuration(seconds);
+  };
+
   const activeTasks = tasks.filter(t => !t.completed);
   const completedTasks = tasks.filter(t => t.completed);
 
@@ -64,6 +126,24 @@ function TaskTracker({ tasks, addTask, toggleTask, editTask, deleteTask }) {
     <div className="main-container">
       <div className="task-page">
         <h1 className="task-title">Tasks</h1>
+        
+        {activeTimeEntry && (
+          <div className="active-timer-indicator">
+            <div className="timer-info">
+              <Clock size={16} />
+              <span>Tracking: <strong>{activeTimeEntry.task.text}</strong></span>
+            </div>
+            <Button
+              className="stop-timer-btn"
+              onClick={handleStopTracking}
+              disabled={trackingStates.has(activeTimeEntry.task.id)}
+            >
+              <Square size={14} />
+              {trackingStates.has(activeTimeEntry.task.id) ? 'Stopping...' : 'Stop'}
+            </Button>
+          </div>
+        )}
+
         <div className="task-input-container">
           <input
             className="task-input"
@@ -113,9 +193,51 @@ function TaskTracker({ tasks, addTask, toggleTask, editTask, deleteTask }) {
                       checked={task.completed}
                       onChange={() => toggleTask(task.id)}
                     />
-                    <span className="task-text">{task.text}</span>
+                    <div className="task-text-container">
+                      <span className="task-text">{task.text}</span>
+                      {task.totalTimeSpent > 0 && (
+                        <span className="task-time-spent">
+                          <Clock size={12} />
+                          {formatTimeSpent(task.totalTimeSpent)}
+                        </span>
+                      )}
+                      {isTaskBeingTracked(task.id) && (
+                        <span className="task-tracking-indicator">
+                          ⏱️ Tracking...
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="task-actions">
+                    {/* Time tracking button */}
+                    {!isTaskBeingTracked(task.id) && !activeTimeEntry ? (
+                      <Button 
+                        className="task-action-btn task-timer-btn"
+                        onClick={() => handleStartTracking(task.id)}
+                        disabled={trackingStates.has(task.id)}
+                        title="Start time tracking"
+                      >
+                        {trackingStates.has(task.id) ? '...' : <Play size={14} />}
+                      </Button>
+                    ) : isTaskBeingTracked(task.id) ? (
+                      <Button 
+                        className="task-action-btn task-timer-stop-btn"
+                        onClick={handleStopTracking}
+                        disabled={trackingStates.has(task.id)}
+                        title="Stop time tracking"
+                      >
+                        {trackingStates.has(task.id) ? '...' : <Square size={14} />}
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="task-action-btn task-timer-btn disabled"
+                        disabled
+                        title="Another task is being tracked"
+                      >
+                        <Play size={14} />
+                      </Button>
+                    )}
+                    
                     <Button 
                       className="task-action-btn task-edit-btn"
                       onClick={() => handleEditTask(task)}
@@ -160,7 +282,15 @@ function TaskTracker({ tasks, addTask, toggleTask, editTask, deleteTask }) {
                       checked={task.completed}
                       onChange={() => toggleTask(task.id)}
                     />
-                    <span className="task-text task-text-completed">{task.text}</span>
+                    <div className="task-text-container">
+                      <span className="task-text task-text-completed">{task.text}</span>
+                      {task.totalTimeSpent > 0 && (
+                        <span className="task-time-spent">
+                          <Clock size={12} />
+                          {formatTimeSpent(task.totalTimeSpent)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="task-actions">
                     <Button 

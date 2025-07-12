@@ -29,6 +29,12 @@ const Header = ({ activeTab, onNav, user, onLogout }) => {
           Tasks
         </button>
         <button
+          className={`header__link ${activeTab === 'time' ? 'header__link--active' : ''}`}
+          onClick={() => onNav('time')}
+        >
+          Time Tracking
+        </button>
+        <button
           className={`header__link ${activeTab === 'journal' ? 'header__link--active' : ''}`}
           onClick={() => onNav('journal')}
         >
