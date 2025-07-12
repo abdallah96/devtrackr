@@ -146,6 +146,35 @@
   transition: color 0.3s ease;
 }
 
+.dashboard-action-btn {
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.dashboard-action-btn:hover {
+  background: var(--accent-color-dark);
+  transform: translateY(-2px);
+}
+
+.workspace-preview {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.workspace-preview p {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+}
+
 @media (max-width: 1400px) {
   .app-main-container {
     padding: 1.5rem;

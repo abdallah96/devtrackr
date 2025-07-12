@@ -8,33 +8,187 @@ datasource db {
 }
 
 model User {
-  id           Int            @id @default(autoincrement())
-  email        String         @unique
-  password     String
-  name         String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  tasks        Task[]
+  id                Int                @id @default(autoincrement())
+  email             String             @unique
+  password          String
+  name              String?
+  avatar            String?
+  timezone          String?
+  googleAccessToken String?
+  googleRefreshToken String?
+  googleCalendarId  String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  
+  // Individual user content
+  tasks             Task[]
+  journalEntries    JournalEntry[]
+  
+  // Team and workspace relationships
+  ownedWorkspaces   Workspace[]        @relation("WorkspaceOwner")
+  workspaceMembers  WorkspaceMember[]
+  teamMembers       TeamMember[]
+  
+  // Calendar events
+  calendarEvents    CalendarEvent[]
+  
+  // Time tracking
+  timeEntries       TimeEntry[]
+  activeTimeEntry   TimeEntry?         @relation("ActiveTimeEntry")
+}
+
+model Workspace {
+  id          Int                @id @default(autoincrement())
+  name        String
+  description String?
+  color       String?
+  isDefault   Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  
+  // Relationships
+  ownerId     Int
+  owner       User               @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     WorkspaceMember[]
+  teams       Team[]
+  tasks       Task[]
   journalEntries JournalEntry[]
+  calendarEvents CalendarEvent[]
+  timeEntries TimeEntry[]
+}
+
+model WorkspaceMember {
+  id          Int       @id @default(autoincrement())
+  role        String    @default("member") // owner, admin, member, viewer
+  joinedAt    DateTime  @default(now())
+  
+  // Relationships
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId Int
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, workspaceId])
+}
+
+model Team {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  color       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  // Relationships
+  workspaceId Int
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
+  tasks       Task[]
+}
+
+model TeamMember {
+  id       Int      @id @default(autoincrement())
+  role     String   @default("member") // lead, member
+  joinedAt DateTime @default(now())
+  
+  // Relationships
+  userId   Int
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId   Int
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, teamId])
 }
 
 model Task {
   id        Int      @id @default(autoincrement())
   text      String
   completed Boolean  @default(false)
+  priority  String   @default("medium") // low, medium, high, urgent
+  dueDate   DateTime?
   date      DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Time tracking
+  estimatedHours    Float?
+  totalTimeSpent    Int      @default(0) // Total seconds spent on this task
+  isTimeTracking    Boolean  @default(false) // Is currently being tracked
+  
+  // Relationships
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId Int?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  teamId      Int?
+  team        Team?      @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  
+  // Calendar integration
+  calendarEventId String?
+  calendarEvent   CalendarEvent? @relation(fields: [calendarEventId], references: [googleEventId])
+  
+  // Time entries
+  timeEntries     TimeEntry[]
+}
+
+model TimeEntry {
+  id          String    @id @default(cuid())
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?      // Duration in seconds (calculated when stopped)
+  description String?
+  isActive    Boolean   @default(true) // Is this time entry currently running
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relationships
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId      Int
+  task        Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  workspaceId Int?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  // Active time entry relationship
+  activeUserId Int?      @unique
+  activeUser   User?     @relation("ActiveTimeEntry", fields: [activeUserId], references: [id])
 }
 
 model JournalEntry {
   id        Int      @id @default(autoincrement())
   text      String
+  mood      String?  // happy, neutral, sad, excited, stressed
+  tags      String[] // Array of tags
   date      DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Relationships
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId Int?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model CalendarEvent {
+  id            String    @id @default(cuid())
+  googleEventId String    @unique
+  title         String
+  description   String?
+  startTime     DateTime
+  endTime       DateTime
+  location      String?
+  isAllDay      Boolean   @default(false)
+  calendarId    String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relationships
+  userId        Int
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId   Int?
+  workspace     Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  // Task integration
+  tasks         Task[]
 }

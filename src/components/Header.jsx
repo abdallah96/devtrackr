@@ -29,10 +29,28 @@ const Header = ({ activeTab, onNav, user, onLogout }) => {
           Tasks
         </button>
         <button
+          className={`header__link ${activeTab === 'time' ? 'header__link--active' : ''}`}
+          onClick={() => onNav('time')}
+        >
+          Time Tracking
+        </button>
+        <button
           className={`header__link ${activeTab === 'journal' ? 'header__link--active' : ''}`}
           onClick={() => onNav('journal')}
         >
           Journal
+        </button>
+        <button
+          className={`header__link ${activeTab === 'workspaces' ? 'header__link--active' : ''}`}
+          onClick={() => onNav('workspaces')}
+        >
+          Workspaces
+        </button>
+        <button
+          className={`header__link ${activeTab === 'calendar' ? 'header__link--active' : ''}`}
+          onClick={() => onNav('calendar')}
+        >
+          Calendar
         </button>
         <button
           className={`header__link ${activeTab === 'stats' ? 'header__link--active' : ''}`}

@@ -278,32 +278,210 @@
   border-top: 1px solid #4a5568;
 }
 
-/* Responsive design */
-@media (max-width: 640px) {
-  .task-page {
-    padding: 1rem;
+/* Active Timer Indicator */
+.active-timer-indicator {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, var(--accent-color), #8b5cf6);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+  50% { box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5); }
+}
+
+.timer-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.timer-info svg {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.stop-timer-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.stop-timer-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.stop-timer-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Task Text Container */
+.task-text-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.task-time-spent {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--accent-color);
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.task-time-spent svg {
+  opacity: 0.7;
+}
+
+.task-tracking-indicator {
+  color: #10b981;
+  font-size: 0.75rem;
+  font-weight: 500;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
+}
+
+/* Time Tracking Buttons */
+.task-timer-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-width: 36px;
+  height: 36px;
+}
+
+.task-timer-btn:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.task-timer-stop-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-width: 36px;
+  height: 36px;
+}
+
+.task-timer-stop-btn:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.task-timer-btn.disabled {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.task-timer-btn:disabled,
+.task-timer-stop-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Update task actions layout to accommodate timer button */
+.task-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* Task content layout adjustment */
+.task-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+}
+
+.task-checkbox {
+  margin-top: 0.25rem; /* Align with first line of text */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .active-timer-indicator {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
   }
   
-  .task-input-container {
-    flex-direction: column;
+  .timer-info {
+    justify-content: center;
   }
   
   .task-item {
     flex-direction: column;
-    align-items: stretch;
     gap: 1rem;
   }
   
+  .task-content {
+    width: 100%;
+  }
+  
   .task-actions {
+    width: 100%;
     justify-content: flex-end;
+    margin-left: 0;
   }
   
-  .task-edit-container {
-    flex-direction: column;
-    align-items: stretch;
+  .task-time-spent {
+    font-size: 0.7rem;
   }
   
-  .task-edit-actions {
-    justify-content: flex-end;
+  .task-tracking-indicator {
+    font-size: 0.7rem;
   }
 } 
