@@ -73,7 +73,15 @@ app.use(cors({
 
 app.use(express.json());
 
+// Serve static files from the React app build directory
+app.use(express.static('build'));
+
 const prisma = new PrismaClient();
+
+// Basic hello route for testing
+app.get('/api/hello', (req, res) => {
+  res.status(200).json({ message: "Hello from local server!" });
+});
 
 // JWT verification middleware
 const verifyToken = (req) => {
@@ -1285,6 +1293,17 @@ app.delete('/api/time/entries/:id', async (req, res) => {
     console.error('Delete time entry error:', error);
     res.status(500).json({ error: 'Failed to delete time entry' });
   }
+});
+
+// Catch-all handler: send back React's index.html file for any non-API routes
+app.use((req, res, next) => {
+  // Skip API routes
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  
+  const path = require('path');
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 const PORT = process.env.PORT || 5001;
