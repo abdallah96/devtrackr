@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { calendarAPI } from '../api';
-import { Calendar, Sync, Plus, Clock, MapPin, Users, ExternalLink } from 'lucide-react';
+import { Calendar, RefreshCw, Plus, Clock, MapPin, Users, ExternalLink } from 'lucide-react';
 import './CalendarIntegration.css';
 
 const CalendarIntegration = ({ user }) => {
@@ -151,7 +151,7 @@ const CalendarIntegration = ({ user }) => {
             onClick={handleSyncCalendar}
             disabled={syncing}
           >
-            <Sync size={16} className={syncing ? 'spinning' : ''} />
+            <RefreshCw size={16} className={syncing ? 'spinning' : ''} />
             {syncing ? 'Syncing...' : 'Sync Calendar'}
           </button>
         </div>

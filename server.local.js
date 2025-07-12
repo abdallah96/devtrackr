@@ -846,6 +846,447 @@ app.post('/api/workspaces/:workspaceId/teams', async (req, res) => {
   }
 });
 
+// Time Tracking Routes
+app.post('/api/time/start', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { taskId, description } = req.body;
+    
+    if (!taskId) {
+      return res.status(400).json({ error: 'Task ID is required' });
+    }
+    
+    // Verify task belongs to user or user has access through workspace
+    const task = await prisma.task.findFirst({
+      where: {
+        id: parseInt(taskId),
+        OR: [
+          { userId: user.userId },
+          { workspace: { members: { some: { userId: user.userId } } } }
+        ]
+      },
+      include: { workspace: true }
+    });
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found or access denied' });
+    }
+    
+    // Stop any active time entry for this user
+    const activeEntries = await prisma.timeEntry.findMany({
+      where: { 
+        userId: user.userId, 
+        isActive: true 
+      }
+    });
+    
+    const endTime = new Date();
+    for (const entry of activeEntries) {
+      const duration = Math.floor((endTime - new Date(entry.startTime)) / 1000);
+      await prisma.timeEntry.update({
+        where: { id: entry.id },
+        data: {
+          isActive: false,
+          endTime,
+          duration
+        }
+      });
+      
+      // Update task total time
+      await prisma.task.update({
+        where: { id: entry.taskId },
+        data: {
+          totalTimeSpent: { increment: duration },
+          isTimeTracking: false
+        }
+      });
+    }
+    
+    // Update the active time entry relationship to null
+    await prisma.user.update({
+      where: { id: user.userId },
+      data: { activeTimeEntry: { disconnect: true } }
+    });
+    
+    // Create new time entry
+    const timeEntry = await prisma.timeEntry.create({
+      data: {
+        userId: user.userId,
+        taskId: parseInt(taskId),
+        workspaceId: task.workspaceId,
+        description,
+        startTime: new Date(),
+        isActive: true,
+        activeUserId: user.userId
+      },
+      include: {
+        task: { select: { id: true, text: true } },
+        workspace: { select: { id: true, name: true } }
+      }
+    });
+    
+    // Update task to indicate it's being tracked
+    await prisma.task.update({
+      where: { id: parseInt(taskId) },
+      data: { isTimeTracking: true }
+    });
+    
+    res.json(timeEntry);
+  } catch (error) {
+    console.error('Start time tracking error:', error);
+    res.status(500).json({ error: 'Failed to start time tracking' });
+  }
+});
+
+app.post('/api/time/stop', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { timeEntryId } = req.body;
+    
+    let timeEntry;
+    if (timeEntryId) {
+      // Stop specific time entry
+      timeEntry = await prisma.timeEntry.findFirst({
+        where: {
+          id: timeEntryId,
+          userId: user.userId,
+          isActive: true
+        }
+      });
+    } else {
+      // Stop current active time entry
+      timeEntry = await prisma.timeEntry.findFirst({
+        where: {
+          userId: user.userId,
+          isActive: true
+        }
+      });
+    }
+    
+    if (!timeEntry) {
+      return res.status(404).json({ error: 'No active time entry found' });
+    }
+    
+    const endTime = new Date();
+    const duration = Math.floor((endTime - new Date(timeEntry.startTime)) / 1000); // Duration in seconds
+    
+    // Update time entry
+    const updatedTimeEntry = await prisma.timeEntry.update({
+      where: { id: timeEntry.id },
+      data: {
+        endTime,
+        duration,
+        isActive: false,
+        activeUserId: null
+      },
+      include: {
+        task: { select: { id: true, text: true } },
+        workspace: { select: { id: true, name: true } }
+      }
+    });
+    
+    // Update task total time and stop tracking indicator
+    await prisma.task.update({
+      where: { id: timeEntry.taskId },
+      data: {
+        totalTimeSpent: {
+          increment: duration
+        },
+        isTimeTracking: false
+      }
+    });
+    
+    res.json(updatedTimeEntry);
+  } catch (error) {
+    console.error('Stop time tracking error:', error);
+    res.status(500).json({ error: 'Failed to stop time tracking' });
+  }
+});
+
+app.get('/api/time/active', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const activeTimeEntry = await prisma.timeEntry.findFirst({
+      where: {
+        userId: user.userId,
+        isActive: true
+      },
+      include: {
+        task: { select: { id: true, text: true } },
+        workspace: { select: { id: true, name: true } }
+      }
+    });
+    
+    res.json(activeTimeEntry);
+  } catch (error) {
+    console.error('Get active time entry error:', error);
+    res.status(500).json({ error: 'Failed to get active time entry' });
+  }
+});
+
+app.get('/api/time/entries', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { taskId, workspaceId, startDate, endDate, userId: requestedUserId } = req.query;
+    
+    // Build where clause
+    const where = { userId: user.userId };
+    
+    // If requesting another user's time entries, check permissions
+    if (requestedUserId && parseInt(requestedUserId) !== user.userId) {
+      // Check if user has admin access to any shared workspace
+      const hasAdminAccess = await prisma.workspaceMember.findFirst({
+        where: {
+          userId: user.userId,
+          role: { in: ['owner', 'admin'] }
+        }
+      });
+      
+      if (!hasAdminAccess) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      where.userId = parseInt(requestedUserId);
+    }
+    
+    if (taskId) where.taskId = parseInt(taskId);
+    if (workspaceId) where.workspaceId = parseInt(workspaceId);
+    if (startDate) where.startTime = { gte: new Date(startDate) };
+    if (endDate) {
+      where.startTime = where.startTime || {};
+      where.startTime.lte = new Date(endDate);
+    }
+    
+    const timeEntries = await prisma.timeEntry.findMany({
+      where,
+      include: {
+        task: { select: { id: true, text: true } },
+        workspace: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, email: true } }
+      },
+      orderBy: { startTime: 'desc' }
+    });
+    
+    res.json(timeEntries);
+  } catch (error) {
+    console.error('Get time entries error:', error);
+    res.status(500).json({ error: 'Failed to get time entries' });
+  }
+});
+
+app.get('/api/time/reports', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { workspaceId, startDate, endDate, groupBy = 'user' } = req.query;
+    
+    // Check if user has admin access to workspace
+    if (workspaceId) {
+      const hasAccess = await prisma.workspace.findFirst({
+        where: {
+          id: parseInt(workspaceId),
+          OR: [
+            { ownerId: user.userId },
+            { members: { some: { userId: user.userId, role: { in: ['admin', 'owner'] } } } }
+          ]
+        }
+      });
+      
+      if (!hasAccess) {
+        return res.status(403).json({ error: 'Access denied to workspace reports' });
+      }
+    }
+    
+    // Build where clause for time entries
+    const where = {};
+    if (workspaceId) where.workspaceId = parseInt(workspaceId);
+    if (startDate) where.startTime = { gte: new Date(startDate) };
+    if (endDate) {
+      where.startTime = where.startTime || {};
+      where.startTime.lte = new Date(endDate);
+    }
+    
+    // If no workspace specified, only show user's own data
+    if (!workspaceId) {
+      where.userId = user.userId;
+    }
+    
+    const timeEntries = await prisma.timeEntry.findMany({
+      where: {
+        ...where,
+        isActive: false // Only completed time entries
+      },
+      include: {
+        task: { select: { id: true, text: true } },
+        workspace: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, email: true } }
+      }
+    });
+    
+    // Group and aggregate data
+    const report = {};
+    
+    timeEntries.forEach(entry => {
+      let groupKey;
+      if (groupBy === 'user') {
+        groupKey = `${entry.user.name || entry.user.email} (${entry.user.id})`;
+      } else if (groupBy === 'task') {
+        groupKey = `${entry.task.text} (${entry.task.id})`;
+      } else if (groupBy === 'workspace') {
+        groupKey = entry.workspace ? `${entry.workspace.name} (${entry.workspace.id})` : 'Personal';
+      }
+      
+      if (!report[groupKey]) {
+        report[groupKey] = {
+          totalSeconds: 0,
+          totalHours: 0,
+          entryCount: 0,
+          entries: []
+        };
+      }
+      
+      report[groupKey].totalSeconds += entry.duration || 0;
+      report[groupKey].totalHours = Math.round((report[groupKey].totalSeconds / 3600) * 100) / 100;
+      report[groupKey].entryCount += 1;
+      report[groupKey].entries.push(entry);
+    });
+    
+    res.json(report);
+  } catch (error) {
+    console.error('Get time reports error:', error);
+    res.status(500).json({ error: 'Failed to generate time reports' });
+  }
+});
+
+app.put('/api/time/entries/:id', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { id } = req.params;
+    const { description, startTime, endTime } = req.body;
+    
+    // Verify time entry belongs to user
+    const existingEntry = await prisma.timeEntry.findFirst({
+      where: { 
+        id,
+        userId: user.userId 
+      }
+    });
+    
+    if (!existingEntry) {
+      return res.status(404).json({ error: 'Time entry not found' });
+    }
+    
+    const updateData = {};
+    if (description !== undefined) updateData.description = description;
+    if (startTime) updateData.startTime = new Date(startTime);
+    if (endTime) updateData.endTime = new Date(endTime);
+    
+    // Recalculate duration if times are updated
+    if (startTime || endTime) {
+      const start = new Date(startTime || existingEntry.startTime);
+      const end = new Date(endTime || existingEntry.endTime);
+      updateData.duration = Math.floor((end - start) / 1000);
+    }
+    
+    const updatedEntry = await prisma.timeEntry.update({
+      where: { id },
+      data: updateData,
+      include: {
+        task: { select: { id: true, text: true } },
+        workspace: { select: { id: true, name: true } }
+      }
+    });
+    
+    // Update task total time if duration changed
+    if (updateData.duration !== undefined) {
+      const oldDuration = existingEntry.duration || 0;
+      const newDuration = updateData.duration;
+      const timeDiff = newDuration - oldDuration;
+      
+      await prisma.task.update({
+        where: { id: existingEntry.taskId },
+        data: {
+          totalTimeSpent: {
+            increment: timeDiff
+          }
+        }
+      });
+    }
+    
+    res.json(updatedEntry);
+  } catch (error) {
+    console.error('Update time entry error:', error);
+    res.status(500).json({ error: 'Failed to update time entry' });
+  }
+});
+
+app.delete('/api/time/entries/:id', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { id } = req.params;
+    
+    // Verify time entry belongs to user
+    const existingEntry = await prisma.timeEntry.findFirst({
+      where: { 
+        id,
+        userId: user.userId 
+      }
+    });
+    
+    if (!existingEntry) {
+      return res.status(404).json({ error: 'Time entry not found' });
+    }
+    
+    // Remove time from task total
+    if (existingEntry.duration) {
+      await prisma.task.update({
+        where: { id: existingEntry.taskId },
+        data: {
+          totalTimeSpent: {
+            decrement: existingEntry.duration
+          }
+        }
+      });
+    }
+    
+    await prisma.timeEntry.delete({
+      where: { id }
+    });
+    
+    res.status(204).end();
+  } catch (error) {
+    console.error('Delete time entry error:', error);
+    res.status(500).json({ error: 'Failed to delete time entry' });
+  }
+});
+
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
