@@ -21,6 +21,9 @@ model User {
   updatedAt      DateTime       @updatedAt
   journalEntries JournalEntry[]
   tasks          Task[]
+  timeEntries    TimeEntry[]
+  activeTimeEntryId String?      @unique
+  activeTimeEntry   TimeEntry?  @relation("ActiveTimeEntry", fields: [activeTimeEntryId], references: [id])
   ownedWorkspaces Workspace[]   @relation("WorkspaceOwner")
   memberWorkspaces WorkspaceMember[]
   teamMemberships TeamMember[]
@@ -35,6 +38,32 @@ model Task {
   updatedAt DateTime @updatedAt
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId Int?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  
+  // Time tracking fields
+  estimatedHours    Float?
+  totalTimeSpent    Int      @default(0) // Total seconds
+  isTimeTracking    Boolean  @default(false)
+  timeEntries       TimeEntry[]
+}
+
+model TimeEntry {
+  id          String    @id @default(cuid())
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?      // Duration in seconds
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relationships
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeUser  User?     @relation("ActiveTimeEntry")
+  taskId      Int
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
   workspaceId Int?
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 }
@@ -63,6 +92,7 @@ model Workspace {
   members     WorkspaceMember[]
   tasks       Task[]
   journalEntries JournalEntry[]
+  timeEntries TimeEntry[]
   teams       Team[]
 }
 
