@@ -19,7 +19,7 @@
       "source": "/api/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Credentials", "value": "true" },
-        { "key": "Access-Control-Allow-Origin", "value": "http://localhost:5001" },
+        { "key": "Access-Control-Allow-Origin", "value": "${FRONTEND_URL}" },
         { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
         { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization" }
       ]
@@ -35,6 +35,8 @@
     { "source": "/api/workspaces/:id", "destination": "/api/workspaces/[id]/index.js" },
     { "source": "/api/workspaces/:id/teams", "destination": "/api/workspaces/[id]/teams.js" },
     { "source": "/api/teams/:id/members", "destination": "/api/teams/[id]/members.js" },
+    { "source": "/api/time/entries", "destination": "/api/time/entries.js" },
+    { "source": "/api/calendar/events", "destination": "/api/calendar/events.js" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

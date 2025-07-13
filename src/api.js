@@ -1,7 +1,5 @@
 // API base URL configuration
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-vercel-app-name.vercel.app/api'
-  : 'http://localhost:5001/api';
+const API_BASE_URL = 'http://localhost:5001/api';
 
 // Auth token management
 const getAuthHeaders = () => ({
@@ -23,21 +21,29 @@ export const authAPI = {
   login: async (email, password) => {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
     if (!response.ok) throw new Error('Login failed');
-    return response.json();
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    return data;
   },
   
   register: async (email, password, name) => {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, name }),
     });
     if (!response.ok) throw new Error('Registration failed');
-    return response.json();
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    return data;
   },
   
   logout: () => {

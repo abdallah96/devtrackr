@@ -1,14 +1,16 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../utils/auth';
 
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5001');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -35,15 +37,7 @@ export default async function handler(req, res) {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        email: true,
-        password: true,
-        name: true,
-        createdAt: true,
-        updatedAt: true
-      }
+      where: { email }
     });
 
     if (existingUser) {
@@ -63,7 +57,6 @@ export default async function handler(req, res) {
       select: {
         id: true,
         email: true,
-        password: true,
         name: true,
         createdAt: true,
         updatedAt: true
@@ -73,20 +66,13 @@ export default async function handler(req, res) {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'your-secret-key',
+      JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    // Return user data (without password) and token
-    const { password: _, ...userWithoutPassword } = user;
+    // Return user data and token
     res.status(201).json({
-      user: {
-        id: userWithoutPassword.id,
-        email: userWithoutPassword.email,
-        name: userWithoutPassword.name,
-        createdAt: userWithoutPassword.createdAt,
-        updatedAt: userWithoutPassword.updatedAt
-      },
+      user,
       token
     });
 
