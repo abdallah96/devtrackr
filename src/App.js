@@ -51,13 +51,10 @@ function App() {
 
   // Check for existing authentication on mount
   useEffect(() => {
-    const currentUser = authAPI.getCurrentUser();
-    if (currentUser && authAPI.isAuthenticated()) {
-      setUser(currentUser);
-      loadData();
-    } else {
-      setLoading(false);
-    }
+    // Clear any stale auth data
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setLoading(false);
   }, []);
 
   // Load data from API

@@ -60,6 +60,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.0",
+    "eslint-plugin-jest": "^28.14.0",
     "nodemon": "^3.1.10"
   },
   "engines": {
