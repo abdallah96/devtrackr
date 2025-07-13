@@ -6,8 +6,19 @@ import { JWT_SECRET } from '../utils/auth';
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5001');
+  // Set CORS headers - Allow multiple origins for development and production
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://devtrackr-one.vercel.app',
+    'https://devtrackr-one.vercel.app/'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
