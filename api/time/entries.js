@@ -23,23 +23,55 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const { startDate, endDate } = req.query;
+      const { taskId, workspaceId, startDate, endDate, userId: requestedUserId } = req.query;
       
-      // Get time entries for the authenticated user within the date range
-      const timeEntries = await prisma.task.findMany({
-        where: {
-          userId: user.userId,
-          ...(startDate && endDate ? {
-            date: {
-              gte: new Date(startDate),
-              lte: new Date(endDate)
-            }
-          } : {})
-        },
-        orderBy: { date: 'desc' },
-        include: {
-          workspace: true
+      // Build where clause
+      const where = { userId: user.userId };
+      
+      // If requesting another user's time entries, check permissions
+      if (requestedUserId && parseInt(requestedUserId) !== user.userId) {
+        // Check if user has admin access to any shared workspace
+        const hasAdminAccess = await prisma.workspaceMember.findFirst({
+          where: {
+            userId: user.userId,
+            role: { in: ['owner', 'admin'] }
+          }
+        });
+        
+        if (!hasAdminAccess) {
+          return res.status(403).json({ error: 'Access denied' });
         }
+        
+        where.userId = parseInt(requestedUserId);
+      }
+      
+      if (taskId) where.taskId = parseInt(taskId);
+      if (workspaceId) where.workspaceId = parseInt(workspaceId);
+      if (startDate) where.startTime = { gte: new Date(startDate) };
+      if (endDate) {
+        where.startTime = where.startTime || {};
+        where.startTime.lte = new Date(endDate);
+      }
+      
+      // Get time entries from the TimeEntry model, not Task model
+      const timeEntries = await prisma.timeEntry.findMany({
+        where,
+        include: {
+          task: {
+            select: {
+              id: true,
+              text: true,
+              completed: true
+            }
+          },
+          workspace: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        },
+        orderBy: { startTime: 'desc' }
       });
 
       res.status(200).json(timeEntries);
@@ -63,11 +95,32 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'Task not found' });
       }
 
-      const timeEntry = await prisma.task.update({
-        where: { id: parseInt(taskId) },
+      // Create time entry
+      const timeEntry = await prisma.timeEntry.create({
         data: {
-          date: new Date(startTime),
-          ...(endTime && { completed: true })
+          taskId: parseInt(taskId),
+          userId: user.userId,
+          startTime: new Date(startTime),
+          endTime: endTime ? new Date(endTime) : null,
+          description: description || null,
+          duration: endTime ? Math.floor((new Date(endTime) - new Date(startTime)) / 1000) : null,
+          isActive: !endTime,
+          workspaceId: task.workspaceId
+        },
+        include: {
+          task: {
+            select: {
+              id: true,
+              text: true,
+              completed: true
+            }
+          },
+          workspace: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
         }
       });
 
