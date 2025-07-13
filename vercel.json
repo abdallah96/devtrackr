@@ -27,6 +27,8 @@
   ],
   "rewrites": [
     { "source": "/api/hello", "destination": "/api/hello.js" },
+    { "source": "/api/auth/login", "destination": "/api/auth/login.js" },
+    { "source": "/api/auth/register", "destination": "/api/auth/register.js" },
     { "source": "/api/tasks", "destination": "/api/tasks.js" },
     { "source": "/api/tasks/:id", "destination": "/api/tasks/[id].js" },
     { "source": "/api/journal", "destination": "/api/journal.js" },
@@ -36,7 +38,15 @@
     { "source": "/api/workspaces/:id/teams", "destination": "/api/workspaces/[id]/teams.js" },
     { "source": "/api/teams/:id/members", "destination": "/api/teams/[id]/members.js" },
     { "source": "/api/time/entries", "destination": "/api/time/entries.js" },
+    { "source": "/api/time/entries/:id", "destination": "/api/time/entries/[id].js" },
+    { "source": "/api/time/start", "destination": "/api/time/start.js" },
+    { "source": "/api/time/stop", "destination": "/api/time/stop.js" },
+    { "source": "/api/time/active", "destination": "/api/time/active.js" },
+    { "source": "/api/time/reports", "destination": "/api/time/reports.js" },
     { "source": "/api/calendar/events", "destination": "/api/calendar/events.js" },
+    { "source": "/api/calendar/sync", "destination": "/api/calendar/sync.js" },
+    { "source": "/api/auth/google/url", "destination": "/api/auth/google/url.js" },
+    { "source": "/api/auth/google/callback", "destination": "/api/auth/google/callback.js" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
