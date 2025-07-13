@@ -981,13 +981,18 @@ app.post('/api/time/start', async (req, res) => {
         workspaceId: task.workspaceId,
         description,
         startTime: new Date(),
-        isActive: true,
-        activeUserId: user.userId
+        isActive: true
       },
       include: {
         task: { select: { id: true, text: true } },
         workspace: { select: { id: true, name: true } }
       }
+    });
+    
+    // Update the user's active time entry
+    await prisma.user.update({
+      where: { id: user.userId },
+      data: { activeTimeEntryId: timeEntry.id }
     });
     
     // Update task to indicate it's being tracked
@@ -1039,29 +1044,34 @@ app.post('/api/time/stop', async (req, res) => {
     const endTime = new Date();
     const duration = Math.floor((endTime - new Date(timeEntry.startTime)) / 1000); // Duration in seconds
     
-    // Update time entry
+    // Clear the active time entry relationship
     const updatedTimeEntry = await prisma.timeEntry.update({
       where: { id: timeEntry.id },
       data: {
-        endTime,
-        duration,
-        isActive: false,
-        activeUserId: null
+        endTime: endTime,
+        duration: duration,
+        isActive: false
       },
       include: {
         task: { select: { id: true, text: true } },
         workspace: { select: { id: true, name: true } }
       }
     });
-    
-    // Update task total time and stop tracking indicator
+
+    // Update the user's active time entry to null
+    await prisma.user.update({
+      where: { id: user.userId },
+      data: { activeTimeEntryId: null }
+    });
+
+    // Update task to indicate it's no longer being tracked
     await prisma.task.update({
       where: { id: timeEntry.taskId },
-      data: {
+      data: { 
+        isTimeTracking: false,
         totalTimeSpent: {
           increment: duration
-        },
-        isTimeTracking: false
+        }
       }
     });
     
@@ -1079,6 +1089,7 @@ app.get('/api/time/active', async (req, res) => {
   }
 
   try {
+    console.log('Prisma client:', typeof prisma, prisma ? 'defined' : 'undefined');
     const activeTimeEntry = await prisma.timeEntry.findFirst({
       where: {
         userId: user.userId,
