@@ -1,40 +1,23 @@
-// Dynamic API base URL for development and production
-const getApiBaseUrl = () => {
-  if (process.env.NODE_ENV === 'production') {
-    // In production, use relative URL (same domain)
-    return process.env.REACT_APP_API_BASE_URL || 'https://devtrackr-one.vercel.app/api';
-  }
-  
-  // In development, try to detect the backend port
-  // You can also set this via environment variable
-  const backendPort = process.env.REACT_APP_API_PORT || '5001';
-  return `http://localhost:${backendPort}/api`;
-};
+// API base URL configuration
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://your-vercel-app-name.vercel.app/api'
+  : 'http://localhost:5001/api';
 
-const API_BASE_URL = getApiBaseUrl();
-
-// Helper function to get auth headers
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
-  };
-};
+// Auth token management
+const getAuthHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('token')}`
+});
 
 // Auth API functions
 export const authAPI = {
-  register: async (email, password, name) => {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name }),
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Registration failed');
-    }
-    return response.json();
+  getCurrentUser: () => {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  },
+  
+  isAuthenticated: () => {
+    return !!localStorage.getItem('token');
   },
   
   login: async (email, password) => {
@@ -43,25 +26,23 @@ export const authAPI = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Login failed');
-    }
+    if (!response.ok) throw new Error('Login failed');
+    return response.json();
+  },
+  
+  register: async (email, password, name) => {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name }),
+    });
+    if (!response.ok) throw new Error('Registration failed');
     return response.json();
   },
   
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-  },
-  
-  getCurrentUser: () => {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
-  },
-  
-  isAuthenticated: () => {
-    return !!localStorage.getItem('token');
   }
 };
 
@@ -74,6 +55,7 @@ export const taskAPI = {
     if (!response.ok) throw new Error('Failed to fetch tasks');
     return response.json();
   },
+  
   create: async (text, date) => {
     const response = await fetch(`${API_BASE_URL}/tasks`, {
       method: 'POST',
@@ -83,31 +65,25 @@ export const taskAPI = {
     if (!response.ok) throw new Error('Failed to create task');
     return response.json();
   },
-  update: async (id, completed) => {
+  
+  update: async (id, updates) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ completed }),
+      body: JSON.stringify(updates),
     });
     if (!response.ok) throw new Error('Failed to update task');
     return response.json();
   },
-  edit: async (id, text) => {
-    const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ text }),
-    });
-    if (!response.ok) throw new Error('Failed to edit task');
-    return response.json();
-  },
+  
   delete: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/tasks?id=${id}`, {
+    const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to delete task');
-  },
+    return response.json();
+  }
 };
 
 // Journal API functions
@@ -119,6 +95,7 @@ export const journalAPI = {
     if (!response.ok) throw new Error('Failed to fetch journal entries');
     return response.json();
   },
+  
   create: async (text, date) => {
     const response = await fetch(`${API_BASE_URL}/journal`, {
       method: 'POST',
@@ -127,23 +104,7 @@ export const journalAPI = {
     });
     if (!response.ok) throw new Error('Failed to create journal entry');
     return response.json();
-  },
-  edit: async (id, text) => {
-    const response = await fetch(`${API_BASE_URL}/journal/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ text }),
-    });
-    if (!response.ok) throw new Error('Failed to edit journal entry');
-    return response.json();
-  },
-  delete: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/journal?id=${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to delete journal entry');
-  },
+  }
 };
 
 // Workspace API functions
@@ -155,6 +116,7 @@ export const workspaceAPI = {
     if (!response.ok) throw new Error('Failed to fetch workspaces');
     return response.json();
   },
+  
   create: async (name, description, color) => {
     const response = await fetch(`${API_BASE_URL}/workspaces`, {
       method: 'POST',
@@ -164,6 +126,7 @@ export const workspaceAPI = {
     if (!response.ok) throw new Error('Failed to create workspace');
     return response.json();
   },
+  
   update: async (id, name, description, color) => {
     const response = await fetch(`${API_BASE_URL}/workspaces/${id}`, {
       method: 'PUT',
@@ -173,6 +136,7 @@ export const workspaceAPI = {
     if (!response.ok) throw new Error('Failed to update workspace');
     return response.json();
   },
+  
   invite: async (workspaceId, email, role = 'member') => {
     const response = await fetch(`${API_BASE_URL}/workspaces/${workspaceId}/invite`, {
       method: 'POST',
@@ -182,6 +146,7 @@ export const workspaceAPI = {
     if (!response.ok) throw new Error('Failed to invite user to workspace');
     return response.json();
   },
+  
   getTeams: async (workspaceId) => {
     const response = await fetch(`${API_BASE_URL}/workspaces/${workspaceId}/teams`, {
       headers: getAuthHeaders()
@@ -189,6 +154,7 @@ export const workspaceAPI = {
     if (!response.ok) throw new Error('Failed to fetch teams');
     return response.json();
   },
+  
   createTeam: async (workspaceId, name, description, color) => {
     const response = await fetch(`${API_BASE_URL}/workspaces/${workspaceId}/teams`, {
       method: 'POST',

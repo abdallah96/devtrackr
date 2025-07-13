@@ -31,7 +31,15 @@ export default async function handler(req, res) {
 
     // Find user by email
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true
+      }
     });
 
     if (!user) {
@@ -55,7 +63,13 @@ export default async function handler(req, res) {
     // Return user data (without password) and token
     const { password: _, ...userWithoutPassword } = user;
     res.status(200).json({
-      user: userWithoutPassword,
+      user: {
+        id: userWithoutPassword.id,
+        email: userWithoutPassword.email,
+        name: userWithoutPassword.name,
+        createdAt: userWithoutPassword.createdAt,
+        updatedAt: userWithoutPassword.updatedAt
+      },
       token
     });
 

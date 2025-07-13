@@ -35,7 +35,15 @@ export default async function handler(req, res) {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true
+      }
     });
 
     if (existingUser) {
@@ -51,6 +59,14 @@ export default async function handler(req, res) {
         email,
         password: hashedPassword,
         name: name || null
+      },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true
       }
     });
 
@@ -64,7 +80,13 @@ export default async function handler(req, res) {
     // Return user data (without password) and token
     const { password: _, ...userWithoutPassword } = user;
     res.status(201).json({
-      user: userWithoutPassword,
+      user: {
+        id: userWithoutPassword.id,
+        email: userWithoutPassword.email,
+        name: userWithoutPassword.name,
+        createdAt: userWithoutPassword.createdAt,
+        updatedAt: userWithoutPassword.updatedAt
+      },
       token
     });
 

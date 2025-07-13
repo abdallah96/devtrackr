@@ -1,6 +1,9 @@
-import jwt from 'jsonwebtoken';
+const jwt = require('jsonwebtoken');
 
-export function verifyToken(req) {
+// Get JWT secret from environment or generate a random one
+const JWT_SECRET = process.env.JWT_SECRET || require('crypto').randomBytes(64).toString('hex');
+
+const verifyToken = (req) => {
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -10,21 +13,15 @@ export function verifyToken(req) {
   const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = jwt.verify(token, JWT_SECRET);
     return decoded;
   } catch (error) {
     console.error('Token verification failed:', error);
     return null;
   }
-}
+};
 
-export function requireAuth(req, res, next) {
-  const user = verifyToken(req);
-  
-  if (!user) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-  
-  req.user = user;
-  next();
-} 
+module.exports = {
+  verifyToken,
+  JWT_SECRET
+}; 

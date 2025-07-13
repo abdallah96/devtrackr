@@ -118,7 +118,15 @@ app.post('/api/auth/register', async (req, res) => {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true
+      }
     });
 
     if (existingUser) {
@@ -134,20 +142,34 @@ app.post('/api/auth/register', async (req, res) => {
         email,
         password: hashedPassword,
         name: name || null
+      },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true
       }
     });
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, email: user.email },  // Only include id and email in the token
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     // Return user data (without password) and token
     const { password: _, ...userWithoutPassword } = user;
-    res.status(201).json({
-      user: userWithoutPassword,
+    res.status(200).json({
+      user: {
+        id: userWithoutPassword.id,
+        email: userWithoutPassword.email,
+        name: userWithoutPassword.name,
+        createdAt: userWithoutPassword.createdAt,
+        updatedAt: userWithoutPassword.updatedAt
+      },
       token
     });
 
@@ -168,7 +190,15 @@ app.post('/api/auth/login', async (req, res) => {
 
     // Find user by email
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true
+      }
     });
 
     if (!user) {
@@ -192,7 +222,13 @@ app.post('/api/auth/login', async (req, res) => {
     // Return user data (without password) and token
     const { password: _, ...userWithoutPassword } = user;
     res.status(200).json({
-      user: userWithoutPassword,
+      user: {
+        id: userWithoutPassword.id,
+        email: userWithoutPassword.email,
+        name: userWithoutPassword.name,
+        createdAt: userWithoutPassword.createdAt,
+        updatedAt: userWithoutPassword.updatedAt
+      },
       token
     });
 
@@ -410,25 +446,10 @@ app.get('/api/auth/google/url', async (req, res) => {
   if (!user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-
-  try {
-    const scopes = [
-      'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/calendar.events'
-    ];
-    
-    const authUrl = googleOAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: scopes,
-      state: JSON.stringify({ userId: user.userId }),
-      prompt: 'consent'
-    });
-    
-    res.json({ authUrl });
-  } catch (error) {
-    console.error('Google auth URL error:', error);
-    res.status(500).json({ error: 'Failed to generate auth URL' });
-  }
+  res.status(503).json({ 
+    error: 'Google Calendar integration is temporarily unavailable',
+    message: 'This feature is currently under maintenance. Please try again later.'
+  });
 });
 
 app.post('/api/auth/google/callback', async (req, res) => {
@@ -436,31 +457,10 @@ app.post('/api/auth/google/callback', async (req, res) => {
   if (!user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-
-  try {
-    const { code } = req.body;
-    
-    if (!code) {
-      return res.status(400).json({ error: 'Authorization code is required' });
-    }
-    
-    const { tokens } = await googleOAuth2Client.getToken(code);
-    
-    // Store tokens in database
-    await prisma.user.update({
-      where: { id: user.userId },
-      data: {
-        googleAccessToken: tokens.access_token,
-        googleRefreshToken: tokens.refresh_token,
-        googleCalendarId: 'primary'
-      }
-    });
-    
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Google auth callback error:', error);
-    res.status(500).json({ error: 'Failed to authenticate with Google' });
-  }
+  res.status(503).json({ 
+    error: 'Google Calendar integration is temporarily unavailable',
+    message: 'This feature is currently under maintenance. Please try again later.'
+  });
 });
 
 app.get('/api/calendar/events', async (req, res) => {
@@ -468,38 +468,10 @@ app.get('/api/calendar/events', async (req, res) => {
   if (!user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-
-  try {
-    const userData = await prisma.user.findUnique({
-      where: { id: user.userId }
-    });
-    
-    if (!userData.googleAccessToken) {
-      return res.status(400).json({ error: 'Google Calendar not connected' });
-    }
-    
-    googleOAuth2Client.setCredentials({
-      access_token: userData.googleAccessToken,
-      refresh_token: userData.googleRefreshToken
-    });
-    
-    const calendar = google.calendar({ version: 'v3', auth: googleOAuth2Client });
-    
-    const { timeMin, timeMax } = req.query;
-    
-    const response = await calendar.events.list({
-      calendarId: 'primary',
-      timeMin: timeMin || new Date().toISOString(),
-      timeMax: timeMax,
-      singleEvents: true,
-      orderBy: 'startTime'
-    });
-    
-    res.json(response.data.items);
-  } catch (error) {
-    console.error('Calendar events error:', error);
-    res.status(500).json({ error: 'Failed to fetch calendar events' });
-  }
+  res.status(503).json({ 
+    error: 'Google Calendar integration is temporarily unavailable',
+    message: 'This feature is currently under maintenance. Please try again later.'
+  });
 });
 
 app.post('/api/calendar/sync', async (req, res) => {
@@ -507,66 +479,10 @@ app.post('/api/calendar/sync', async (req, res) => {
   if (!user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-
-  try {
-    const userData = await prisma.user.findUnique({
-      where: { id: user.userId }
-    });
-    
-    if (!userData.googleAccessToken) {
-      return res.status(400).json({ error: 'Google Calendar not connected' });
-    }
-    
-    googleOAuth2Client.setCredentials({
-      access_token: userData.googleAccessToken,
-      refresh_token: userData.googleRefreshToken
-    });
-    
-    const calendar = google.calendar({ version: 'v3', auth: googleOAuth2Client });
-    
-    const response = await calendar.events.list({
-      calendarId: 'primary',
-      timeMin: new Date().toISOString(),
-      singleEvents: true,
-      orderBy: 'startTime'
-    });
-    
-    const events = response.data.items || [];
-    
-    // Sync events to database
-    for (const event of events) {
-      if (event.id) {
-        await prisma.calendarEvent.upsert({
-          where: { googleEventId: event.id },
-          update: {
-            title: event.summary || 'Untitled Event',
-            description: event.description || '',
-            startTime: new Date(event.start.dateTime || event.start.date),
-            endTime: new Date(event.end.dateTime || event.end.date),
-            location: event.location || '',
-            isAllDay: !event.start.dateTime,
-            calendarId: 'primary'
-          },
-          create: {
-            googleEventId: event.id,
-            title: event.summary || 'Untitled Event',
-            description: event.description || '',
-            startTime: new Date(event.start.dateTime || event.start.date),
-            endTime: new Date(event.end.dateTime || event.end.date),
-            location: event.location || '',
-            isAllDay: !event.start.dateTime,
-            calendarId: 'primary',
-            userId: user.userId
-          }
-        });
-      }
-    }
-    
-    res.json({ success: true, eventsCount: events.length });
-  } catch (error) {
-    console.error('Calendar sync error:', error);
-    res.status(500).json({ error: 'Failed to sync calendar events' });
-  }
+  res.status(503).json({ 
+    error: 'Google Calendar integration is temporarily unavailable',
+    message: 'This feature is currently under maintenance. Please try again later.'
+  });
 });
 
 // Workspace Management Routes
@@ -585,17 +501,24 @@ app.get('/api/workspaces', async (req, res) => {
         ]
       },
       include: {
-        owner: { select: { id: true, name: true, email: true } },
-        members: {
-          include: {
-            user: { select: { id: true, name: true, email: true } }
+        owner: { 
+          select: { 
+            id: true, 
+            name: true, 
+            email: true,
+            createdAt: true,
+            updatedAt: true
           }
         },
-        teams: {
+        members: {
           include: {
-            members: {
-              include: {
-                user: { select: { id: true, name: true, email: true } }
+            user: { 
+              select: { 
+                id: true, 
+                name: true, 
+                email: true,
+                createdAt: true,
+                updatedAt: true
               }
             }
           }
@@ -634,10 +557,26 @@ app.post('/api/workspaces', async (req, res) => {
         ownerId: user.userId
       },
       include: {
-        owner: { select: { id: true, name: true, email: true } },
+        owner: { 
+          select: { 
+            id: true, 
+            name: true, 
+            email: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        },
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true } }
+            user: { 
+              select: { 
+                id: true, 
+                name: true, 
+                email: true,
+                createdAt: true,
+                updatedAt: true
+              }
+            }
           }
         }
       }
@@ -679,10 +618,26 @@ app.put('/api/workspaces/:id', async (req, res) => {
       where: { id: parseInt(id) },
       data: { name, description, color },
       include: {
-        owner: { select: { id: true, name: true, email: true } },
+        owner: { 
+          select: { 
+            id: true, 
+            name: true, 
+            email: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        },
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true } }
+            user: { 
+              select: { 
+                id: true, 
+                name: true, 
+                email: true,
+                createdAt: true,
+                updatedAt: true
+              }
+            }
           }
         }
       }
@@ -722,7 +677,14 @@ app.post('/api/workspaces/:id/invite', async (req, res) => {
     
     // Find user by email
     const invitedUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true
+      }
     });
     
     if (!invitedUser) {
@@ -737,7 +699,15 @@ app.post('/api/workspaces/:id/invite', async (req, res) => {
         role
       },
       include: {
-        user: { select: { id: true, name: true, email: true } }
+        user: { 
+          select: { 
+            id: true, 
+            name: true, 
+            email: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        }
       }
     });
     
@@ -781,11 +751,19 @@ app.get('/api/workspaces/:workspaceId/teams', async (req, res) => {
       include: {
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true } }
+            user: { 
+              select: { 
+                id: true, 
+                name: true, 
+                email: true,
+                createdAt: true,
+                updatedAt: true
+              }
+            }
           }
         },
         _count: {
-          select: { tasks: true }
+          select: { members: true }
         }
       }
     });
@@ -827,23 +805,28 @@ app.post('/api/workspaces/:workspaceId/teams', async (req, res) => {
         name,
         description,
         color,
-        workspaceId: parseInt(workspaceId)
+        workspaceId: parseInt(workspaceId),
+        members: {
+          create: {
+            userId: user.userId,
+            role: 'lead'
+          }
+        }
       },
       include: {
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true } }
+            user: { 
+              select: { 
+                id: true, 
+                name: true, 
+                email: true,
+                createdAt: true,
+                updatedAt: true
+              }
+            }
           }
         }
-      }
-    });
-    
-    // Add creator as team lead
-    await prisma.teamMember.create({
-      data: {
-        userId: user.userId,
-        teamId: team.id,
-        role: 'lead'
       }
     });
     
@@ -851,6 +834,69 @@ app.post('/api/workspaces/:workspaceId/teams', async (req, res) => {
   } catch (error) {
     console.error('Team creation error:', error);
     res.status(500).json({ error: 'Failed to create team' });
+  }
+});
+
+app.post('/api/teams/:teamId/members', async (req, res) => {
+  const user = verifyToken(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { teamId } = req.params;
+    const { userId, role = 'member' } = req.body;
+    
+    // Check if user has admin access to team's workspace
+    const team = await prisma.team.findUnique({
+      where: { id: parseInt(teamId) },
+      include: {
+        workspace: {
+          include: {
+            owner: true,
+            members: true
+          }
+        }
+      }
+    });
+    
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+    
+    const hasAccess = team.workspace.ownerId === user.userId || 
+                     team.workspace.members.some(m => m.userId === user.userId && m.role === 'admin');
+    
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    const member = await prisma.teamMember.create({
+      data: {
+        userId: parseInt(userId),
+        teamId: parseInt(teamId),
+        role
+      },
+      include: {
+        user: { 
+          select: { 
+            id: true, 
+            name: true, 
+            email: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        }
+      }
+    });
+    
+    res.json(member);
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'User is already a member of this team' });
+    }
+    console.error('Team member addition error:', error);
+    res.status(500).json({ error: 'Failed to add team member' });
   }
 });
 
@@ -917,7 +963,14 @@ app.post('/api/time/start', async (req, res) => {
     // Update the active time entry relationship to null
     await prisma.user.update({
       where: { id: user.userId },
-      data: { activeTimeEntry: { disconnect: true } }
+      data: { activeTimeEntry: { disconnect: true } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true
+      }
     });
     
     // Create new time entry
