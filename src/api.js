@@ -1,5 +1,7 @@
 // API base URL configuration
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '/api'  // Use relative path for Vercel deployment
+  : 'http://localhost:5001/api';  // Use localhost for development
 
 // Auth token management
 const getAuthHeaders = () => ({

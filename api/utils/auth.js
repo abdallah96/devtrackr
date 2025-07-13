@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 
-// Use a consistent JWT secret for development
-const JWT_SECRET = 'devtrackr-development-secret';
+// Use environment variable for JWT secret or fall back to development secret
+const JWT_SECRET = process.env.JWT_SECRET || 'devtrackr-development-secret-key-change-in-production';
 
 const verifyToken = (req) => {
   const authHeader = req.headers.authorization;
