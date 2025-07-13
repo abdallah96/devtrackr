@@ -79,36 +79,69 @@ const CalendarIntegration = ({ user }) => {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
 
   const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Invalid Time';
+      }
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (error) {
+      return 'Invalid Time';
+    }
   };
 
   const getEventsByDate = (date) => {
     const dateStr = date.toISOString().split('T')[0];
     return events.filter(event => {
-      const eventDate = new Date(event.start.dateTime || event.start.date);
-      return eventDate.toISOString().split('T')[0] === dateStr;
+      try {
+        const eventDate = new Date(event.start.dateTime || event.start.date);
+        if (isNaN(eventDate.getTime())) {
+          return false;
+        }
+        return eventDate.toISOString().split('T')[0] === dateStr;
+      } catch (error) {
+        console.warn('Invalid date in event:', event);
+        return false;
+      }
     });
   };
 
   const getUpcomingEvents = () => {
     const now = new Date();
     return events
-      .filter(event => new Date(event.start.dateTime || event.start.date) >= now)
+      .filter(event => {
+        try {
+          const eventDate = new Date(event.start.dateTime || event.start.date);
+          if (isNaN(eventDate.getTime())) {
+            return false;
+          }
+          return eventDate >= now;
+        } catch (error) {
+          console.warn('Invalid date in event:', event);
+          return false;
+        }
+      })
       .slice(0, 5);
   };
 
@@ -282,20 +315,19 @@ const CalendarIntegration = ({ user }) => {
             <div className="insights-grid">
               <div className="insight-card">
                 <h4>Busiest Day</h4>
-                <p>
-                  {events.reduce((acc, event) => {
-                    const date = new Date(event.start.dateTime || event.start.date);
-                    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-                    acc[dayName] = (acc[dayName] || 0) + 1;
-                    return acc;
-                  }, {})}
-                </p>
                 <p className="insight-value">
                   {Object.entries(events.reduce((acc, event) => {
-                    const date = new Date(event.start.dateTime || event.start.date);
-                    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-                    acc[dayName] = (acc[dayName] || 0) + 1;
-                    return acc;
+                    try {
+                      const date = new Date(event.start.dateTime || event.start.date);
+                      if (isNaN(date.getTime())) {
+                        return acc;
+                      }
+                      const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+                      acc[dayName] = (acc[dayName] || 0) + 1;
+                      return acc;
+                    } catch (error) {
+                      return acc;
+                    }
                   }, {})).sort((a, b) => b[1] - a[1])[0]?.[0] || 'No data'}
                 </p>
               </div>
@@ -308,8 +340,17 @@ const CalendarIntegration = ({ user }) => {
                       events
                         .filter(e => e.start.dateTime && e.end.dateTime)
                         .reduce((acc, event) => {
-                          const duration = new Date(event.end.dateTime) - new Date(event.start.dateTime);
-                          return acc + duration / (1000 * 60); // Convert to minutes
+                          try {
+                            const startDate = new Date(event.start.dateTime);
+                            const endDate = new Date(event.end.dateTime);
+                            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                              return acc;
+                            }
+                            const duration = endDate - startDate;
+                            return acc + duration / (1000 * 60); // Convert to minutes
+                          } catch (error) {
+                            return acc;
+                          }
                         }, 0) / events.filter(e => e.start.dateTime && e.end.dateTime).length
                     ) + ' minutes' : 'No data'
                   }

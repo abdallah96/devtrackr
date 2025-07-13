@@ -504,13 +504,17 @@ app.get('/api/calendar/events', async (req, res) => {
       })
     ]);
 
-    // Format events for calendar
+    // Format events for calendar (Google Calendar compatible format)
     const events = [
       ...tasks.map(task => ({
         id: `task-${task.id}`,
-        title: task.text,
-        start: task.date,
-        end: task.date,
+        summary: task.text,
+        start: {
+          date: task.date ? new Date(task.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+        },
+        end: {
+          date: task.date ? new Date(task.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+        },
         allDay: true,
         type: 'task',
         completed: task.completed,
@@ -518,9 +522,13 @@ app.get('/api/calendar/events', async (req, res) => {
       })),
       ...journalEntries.map(entry => ({
         id: `journal-${entry.id}`,
-        title: entry.text,
-        start: entry.date,
-        end: entry.date,
+        summary: entry.text,
+        start: {
+          date: entry.date ? new Date(entry.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+        },
+        end: {
+          date: entry.date ? new Date(entry.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+        },
         allDay: true,
         type: 'journal',
         workspace: entry.workspace
